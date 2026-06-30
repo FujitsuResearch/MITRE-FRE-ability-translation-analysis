@@ -1,0 +1,83 @@
+# .pre-commit-config.yaml
+# Mirrors the "Local" hooks in the AFR Automated Pipeline diagram.
+# Install once:   pip install pre-commit && pre-commit install && pre-commit install --hook-type pre-push
+# Run on demand:  pre-commit run --all-files
+#
+# Decisions baked in (see chat):
+#   * results/ and the sample dumps stay TRACKED for paper reproducibility,
+#     so nothing here untracks them.
+#   * The three report-style dumps keep a .json extension (the whitepaper
+#     refers to these as JSON files), so check-json EXCLUDES exactly those
+#     three -- including the corrected spelling enriched_variant.json.
+#   * sigma_rules_gbse.yml is a 49-document YAML, so check-yaml allows
+#     multiple documents.
+#
+# NOTE on TruffleHog: the official binary is distributed from a GitHub
+# release-assets host that may be blocked on your network. detect-secrets
+# below is the committed-secret gate; the pre-push TruffleHog stanza is left
+# commented so a missing binary never blocks a local commit. TruffleHog still
+# runs in GitLab CI per the right-hand side of the diagram.
+
+repos:
+  # -- Hygiene + safety (the "Hygiene" box) -----------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]   # sigma_rules_gbse.yml is multi-document
+      - id: check-json
+        # These three carry a .json extension but begin with a plaintext
+        # banner above the JSON body, so they will not parse. They are kept
+        # as-is by decision; exclude them from the JSON syntax check.
+        exclude: |
+          (?x)^(
+            enriched_variant\.json|
+            enriched_control\.json|
+            final_samples_shortened_procedure/full_output_.*\.json
+          )$
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: no-commit-to-branch          # branch protection: blocks direct commits to main
+        args: [--branch, main]
+
+  # -- Committed-secret detection (the "secret-detection" gate) ---------
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+
+  # -- Linting (the "Linting" box) -------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff            # covers flake8 (E,F) + isort (I) per pyproject [tool.ruff.lint]
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/DavidAnson/markdownlint-cli2   # corrected owner (igorshubovych/markdownlint-cli2 does not exist)
+    rev: v0.22.1
+    hooks:
+      - id: markdownlint-cli2
+        args: ["--fix"]
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+
+  # -- Secret scan on push (the "pre-push hook" in the diagram) ---------
+  # Uncomment once the TruffleHog binary is available on your machine/CI.
+  # - repo: local
+  #   hooks:
+  #     - id: trufflehog
+  #       name: TruffleHog (pre-push)
+  #       entry: trufflehog git file://. --since-commit HEAD --fail --no-update
+  #       language: system
+  #       stages: [pre-push]
+  #       pass_filenames: false

